@@ -58,6 +58,7 @@ func handleHttps(host string, client net.Conn) {
 	target, err := net.DialTimeout("tcp", host, 30*time.Second)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	client.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 	go transfer(target, client)
@@ -68,6 +69,7 @@ func handleHttp(host string, client net.Conn) {
 	target, err := net.DialTimeout("tcp", host, 60*time.Second)
 	if err != nil {
 		log.Println(err)
+		return
 	}
 	go transfer(target, client)
 	go transfer(client, target)
