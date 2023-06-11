@@ -7,11 +7,4 @@
   @desc: //TODO
 **/
 
-package util
-
-type ProxyHandle struct {
-}
-
-func (p *ProxyHandle) proxyHttps() {
-
-}
+package trafficForward
