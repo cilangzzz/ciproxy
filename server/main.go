@@ -9,23 +9,9 @@
 
 package main
 
-import (
-	"log"
-	"net"
-	"trafficForward/server/trafficForward"
-)
+import "trafficForward/server/serve"
 
 func main() {
-	ln, err := net.Listen("tcp", ":8000")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for {
-		client, err := ln.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
-		trafficForward.HandleClientConnect(client)
-	}
+	proxyServe := serve.ProxyServe{}
+	proxyServe.Start()
 }
