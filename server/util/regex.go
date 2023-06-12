@@ -22,7 +22,7 @@ func GetHttpsHostRegex(webUrl string) string {
 
 	portReg := regexp.MustCompile(`(:)\d{2,5}`)
 	port := portReg.FindString(webUrl)
-	reg := regexp.MustCompile(`(?i)(http://|https://|\/|:([0-9]+))`)
+	reg := regexp.MustCompile(`(?i)(http://|https://|\/|:([0-9]+))|/[^/]+([&?].*)?$`)
 	host := reg.ReplaceAllString(webUrl, "")
 
 	switch port {

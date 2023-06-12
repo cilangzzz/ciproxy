@@ -10,41 +10,30 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net"
-	"time"
+	"flag"
+	"trafficForward/client/localProxy"
+	"trafficForward/client/proxyClient"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "localhost:8000")
-	if err != nil {
-		log.Fatal(err)
-	}
-	go func() {
-		for {
-			sData := make([]byte, 1024)
-			n, err := conn.Read(sData)
-			fmt.Printf("Received data: %s\n", sData[:n])
-			if err != nil {
-				log.Fatal(err)
-			}
+	ip := flag.String("IP", "66.151.208.210", "Proxy Server Ip Address")
+	port := flag.String("PORT", "8000", "Proxy Server Port")
+	method := flag.String("METHOD", "TCP", "Proxy Server method")
+	localIp := flag.String("i", "127.0.0.1", "Proxy Server Ip Address")
+	localPort := flag.String("p", "8000", "Local Proxy Port")
+	localMethod := flag.String("m", "8000", "Local Proxy Method")
 
-		}
-	}()
-	go func() {
-		for {
-			time.Sleep(1000 * time.Millisecond)
-			_, err = conn.Write([]byte("Hello from client!"))
-			if err != nil {
-				log.Fatal(err)
-			}
-			println("write data to server")
-		}
-	}()
-	for {
-		time.Sleep(10000 * time.Millisecond)
-		println("main goroutine")
+	_ = proxyClient.ProxyClient{
+		Ip:        *ip,
+		Port:      *port,
+		Method:    *method,
+		TLSConfig: nil,
+	}
+
+	_ = localProxy.LocalProxy{
+		Ip:     *localIp,
+		Port:   *localPort,
+		Method: *localMethod,
 	}
 
 }
