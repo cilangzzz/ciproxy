@@ -16,21 +16,45 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"log"
 	"math/big"
+	"os"
 	"time"
 )
 
-type TLSUtil struct {
-	Organization string
-}
+type (
+	TLSUtil struct {
+		Organization string
+	}
+)
 
-func (t *TLSUtil) genCertificate() (cert tls.Certificate, err error) {
+//type TLSUtil struct {
+//	Organization string
+//}
+
+func (t *TLSUtil) GenCertificate() (cert tls.Certificate, err error) {
 	rawCert, rawKey, err := t.generateKeyPair()
 	if err != nil {
 		return
 	}
 	return tls.X509KeyPair(rawCert, rawKey)
 
+}
+
+func (t *TLSUtil) SaveKeyPair() {
+	cert, err := t.GenCertificate()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = os.WriteFile("cert.pem", cert.Certificate[0], 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(cert.PrivateKey)
+	err = os.WriteFile("key.pem", privateKeyBytes, 0600)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (t *TLSUtil) generateKeyPair() (rawCert, rawKey []byte, err error) {

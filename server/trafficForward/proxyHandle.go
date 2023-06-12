@@ -23,12 +23,18 @@ func HandleClientConnect(client net.Conn) {
 	buf := make([]byte, 1024)
 	_, err := client.Read(buf)
 	var method, url string
+	if err != nil {
+		return
+	}
 	_, err = fmt.Sscanf(string(buf[:bytes.IndexByte(buf[:], '\n')]), "%s%s", &method, &url)
 	if err != nil {
 		return
 	}
 	host := util.GetHttpsHostRegex(url)
-
+	if !util.IsValidHost(host) {
+		log.Println("InValidHost", host)
+		return
+	}
 	if false {
 		println("--------------------------------errData--------------------------------")
 		fmt.Printf("%s", buf)

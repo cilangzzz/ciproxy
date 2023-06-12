@@ -5,21 +5,36 @@ import (
 	"regexp"
 )
 
-func GetHttpsHostRegex(url string) string {
+func GetHttpsHostRegex(webUrl string) string {
+	//host, err := url.Parse(webUrl)
+	//println(webUrl)
+	//if err != nil {
+	//	log.Println(err)
+	//}
+	//ip := host.Hostname()
+	//println(host.Hostname())
+	//port := host.Port()
+	//if port == "" {
+	//	return ip + ":433"
+	//} else {
+	//	return ip + ":" + port
+	//}
+
 	portReg := regexp.MustCompile(`(:)\d{2,5}`)
-	port := portReg.FindString(url)
+	port := portReg.FindString(webUrl)
 	reg := regexp.MustCompile(`(?i)(http://|https://|\/|:([0-9]+))`)
-	url = reg.ReplaceAllString(url, "")
+	host := reg.ReplaceAllString(webUrl, "")
+
 	switch port {
 	case "443":
-		url += ":443"
+		host += ":443"
 	case "":
-		url += ":443"
+		host += ":443"
 	default:
-		url += port
+		host += port
 	}
 
-	return url
+	return host
 }
 
 func GetHttpHostRegex(url string) string {
@@ -30,6 +45,8 @@ func GetHttpHostRegex(url string) string {
 }
 
 func IsValidHost(host string) bool {
+	reg := regexp.MustCompile(`(?i)(http://|https://|\/|:([0-9]+))`)
+	host = reg.ReplaceAllString(host, "")
 	// Parse as IP address
 	if ip := net.ParseIP(host); ip != nil {
 		return true
@@ -37,6 +54,7 @@ func IsValidHost(host string) bool {
 
 	// Parse as hostname
 	if _, err := net.LookupHost(host); err == nil {
+
 		return true
 	}
 
@@ -44,6 +62,5 @@ func IsValidHost(host string) bool {
 	//if _, err := url.Parse(host); err == nil {
 	//	return true
 	//}
-
 	return false
 }
