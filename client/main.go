@@ -22,18 +22,19 @@ func main() {
 	localIp := flag.String("i", "127.0.0.1", "Proxy Server Ip Address")
 	localPort := flag.String("p", "8000", "Local Proxy Port")
 	localMethod := flag.String("m", "8000", "Local Proxy Method")
-
-	_ = proxyClient.ProxyClient{
-		Ip:        *ip,
-		Port:      *port,
-		Method:    *method,
-		TLSConfig: nil,
-	}
-
-	_ = localProxy.LocalProxy{
+	localServe := localProxy.LocalProxy{
 		Ip:     *localIp,
 		Port:   *localPort,
 		Method: *localMethod,
 	}
+	localServe.Start()
+	proxyClient := proxyClient.ProxyClient{
+		Ip:        *ip,
+		Port:      *port,
+		Method:    *method,
+		Client:    localServe.Client,
+		TLSConfig: nil,
+	}
+	proxyClient.Connect()
 
 }

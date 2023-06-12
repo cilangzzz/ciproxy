@@ -10,14 +10,32 @@
 
 package localProxy
 
+import (
+	"log"
+	"net"
+)
+
 type (
 	LocalProxy struct {
 		Ip     string
 		Port   string
 		Method string
+		Client net.Conn
 	}
 )
 
 func (l *LocalProxy) Start() {
+	host := l.Ip + ":" + l.Port
+	ln, err := net.Listen("tcp", host)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	for {
+		client, err := ln.Accept()
+		l.Client = client
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }
