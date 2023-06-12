@@ -22,6 +22,7 @@ import (
 func HandleClientConnect(client net.Conn) {
 	buf := make([]byte, 1024)
 	_, err := client.Read(buf)
+	fmt.Sprintf("%s", buf)
 	var method, url string
 	if err != nil {
 		return
