@@ -26,15 +26,13 @@ func main() {
 		Ip:     *localIp,
 		Port:   *localPort,
 		Method: *localMethod,
+		ProxyClient: proxyClient.ProxyClient{
+			Ip:        *ip,
+			Port:      *port,
+			Method:    *method,
+			TLSConfig: nil,
+		},
 	}
 	localServe.Start()
-	proxyClient := proxyClient.ProxyClient{
-		Ip:        *ip,
-		Port:      *port,
-		Method:    *method,
-		Client:    localServe.Client,
-		TLSConfig: nil,
-	}
-	proxyClient.Connect()
 
 }

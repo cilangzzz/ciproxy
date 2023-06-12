@@ -12,23 +12,13 @@ package proxyClient
 
 import (
 	"crypto/tls"
-	"net"
-	"trafficForward/client/trafficForward"
 )
-
-var proxyClient *ProxyClient
 
 type (
 	ProxyClient struct {
 		Ip        string
 		Port      string
 		Method    string
-		Client    net.Conn
 		TLSConfig *tls.Config
 	}
 )
-
-func (p *ProxyClient) Connect() {
-	host := proxyClient.Ip + ":" + proxyClient.Port
-	trafficForward.HandleServerConnect(p.Client, host)
-}

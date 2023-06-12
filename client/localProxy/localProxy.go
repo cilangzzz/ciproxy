@@ -13,14 +13,17 @@ package localProxy
 import (
 	"log"
 	"net"
+	"trafficForward/client/proxyClient"
+	"trafficForward/client/trafficForward"
 )
 
 type (
 	LocalProxy struct {
-		Ip     string
-		Port   string
-		Method string
-		Client net.Conn
+		Ip          string
+		Port        string
+		Method      string
+		Client      net.Conn
+		ProxyClient proxyClient.ProxyClient
 	}
 )
 
@@ -37,5 +40,9 @@ func (l *LocalProxy) Start() {
 		if err != nil {
 			log.Println(err)
 		}
+		host := l.ProxyClient.Ip + ":" + l.ProxyClient.Port
+		go trafficForward.HandleServerConnect(client, host)
+
 	}
+
 }
