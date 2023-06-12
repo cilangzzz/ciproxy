@@ -26,7 +26,16 @@ type ProxyServe struct {
 	Protocol      string `json:"protocol,omitempty"`
 }
 
-func (p *ProxyServe) StartInTls() {
+func (p *ProxyServe) Start() {
+
+	switch p.Method {
+	case "NORMAL":
+		p.ListenNormalHttps()
+	case "TUNNEL":
+		p.ListenTunnelTls()
+	}
+}
+func (p ProxyServe) ListenTunnelTls() {
 	tlsConfig := util.TLSUtil{Organization: "cilang"}
 	cert, err := tlsConfig.GenCertificate()
 	if err != nil {
@@ -46,7 +55,7 @@ func (p *ProxyServe) StartInTls() {
 		go trafficForward.HandleClientConnect(client)
 	}
 }
-func (p *ProxyServe) Start() {
+func (p *ProxyServe) ListenNormalHttps() {
 	ln, err := net.Listen("tcp", p.ListenAddress)
 	if err != nil {
 		log.Fatal(err)
