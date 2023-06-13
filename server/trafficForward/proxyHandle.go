@@ -22,7 +22,11 @@ import (
 func HandleClientConnect(client net.Conn) {
 	buf := make([]byte, 1024)
 	_, err := client.Read(buf)
-	fmt.Sprintf("%s", buf)
+	host, err := util.ParseUrl(buf)
+	println(host)
+	if err != nil {
+		return
+	}
 	var method, url string
 	if err != nil {
 		return
@@ -31,11 +35,7 @@ func HandleClientConnect(client net.Conn) {
 	if err != nil {
 		return
 	}
-	host := util.GetHttpsHostRegex(url)
-	if !util.IsValidHost(host) {
-		log.Println("InValidHost", host)
-		return
-	}
+
 	if false {
 		println("--------------------------------errData--------------------------------")
 		fmt.Printf("%s", buf)
@@ -64,6 +64,7 @@ func handleHttps(host string, client net.Conn) {
 
 	target, err := net.DialTimeout("tcp", host, 30*time.Second)
 	if err != nil {
+		println(host)
 		log.Println(err)
 		return
 	}

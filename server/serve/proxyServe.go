@@ -46,9 +46,9 @@ func (p ProxyServe) ListenTunnelTls() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	for {
 		client, err := ln.Accept()
+
 		if err != nil {
 			log.Println(err)
 		}

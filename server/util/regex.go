@@ -1,10 +1,43 @@
 package util
 
 import (
+	"bytes"
+	"errors"
 	"net"
 	"regexp"
+	"strings"
 )
 
+func ParseUrl(url []byte) (string, error) {
+	lines := bytes.Split(url, []byte("\n"))
+	for _, line := range lines {
+
+		if bytes.HasPrefix(line, []byte("Host:")) {
+			// Split Host line by :
+			host := bytes.SplitN(line, []byte(":"), 2)
+
+			// host[1] is the host value
+			hostStr := string(host[1][1:])
+			hostStr = strings.Trim(hostStr, "\r\n")
+
+			portReg := regexp.MustCompile(`(:)\d{2,5}`)
+			port := portReg.FindString(hostStr)
+
+			switch port {
+			case ":443":
+
+			case "":
+				hostStr += ":443"
+			default:
+				//hostStr += port
+			}
+
+			return hostStr, nil
+		}
+	}
+
+	return "", errors.New("no host")
+}
 func GetHttpsHostRegex(webUrl string) string {
 	//host, err := url.Parse(webUrl)
 	//println(webUrl)
