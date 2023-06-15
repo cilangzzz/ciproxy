@@ -41,7 +41,7 @@ func (l *LocalProxy) Start() {
 			log.Println(err)
 		}
 		host := l.ProxyClient.Ip + ":" + l.ProxyClient.Port
-		go trafficForward.HandleServerConnect(client, host)
+		go trafficForward.HandleServerConnect(client, host, l.ProxyClient.TLSConfig)
 
 	}
 

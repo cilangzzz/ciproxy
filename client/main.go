@@ -10,18 +10,32 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
+	"log"
 	"trafficForward/client/localProxy"
 	"trafficForward/client/proxyClient"
+	"trafficForward/client/util"
 )
 
 func main() {
 	ip := flag.String("IP", "66.151.208.210", "Proxy Server Ip Address")
-	port := flag.String("PORT", "8000", "Proxy Server Port")
+	port := flag.String("PORT", "80", "Proxy Server Port")
 	method := flag.String("METHOD", "TCP", "Proxy Server method")
-	localIp := flag.String("i", "127.0.0.1", "Proxy Server Ip Address")
-	localPort := flag.String("p", "8000", "Local Proxy Port")
-	localMethod := flag.String("m", "8000", "Local Proxy Method")
+	localIp := flag.String("lIP", "127.0.0.1", "Proxy Server Ip Address")
+	localPort := flag.String("lPORT", "8000", "Local Proxy Port")
+	localMethod := flag.String("lMETHOD", "TUNNEL", "Local Proxy Method")
+	flag.Parse()
+	tlsUtil := util.TLSUtil{Organization: "client"}
+	cert, err := tlsUtil.GenCertificate()
+	if err != nil {
+		log.Fatal(err)
+
+	}
+	conf := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		InsecureSkipVerify: true,
+	}
 	localServe := localProxy.LocalProxy{
 		Ip:     *localIp,
 		Port:   *localPort,
@@ -30,7 +44,7 @@ func main() {
 			Ip:        *ip,
 			Port:      *port,
 			Method:    *method,
-			TLSConfig: nil,
+			TLSConfig: conf,
 		},
 	}
 	localServe.Start()

@@ -16,10 +16,11 @@ import (
 )
 
 func main() {
-	ip := flag.String("IP", "127.0.0.1", "Server Ip Address")
-	port := flag.String("PORT", "8000", "Server Port")
-	method := flag.String("METHOD", "NORMAL", "Server METHOD NORMAL,TUNNEL")
-	protocol := flag.String("PROTOCOL", "TCP", "Connect Protocol")
+	ip := flag.String("ip", "", "Server Ip Address")
+	port := flag.String("port", "80", "Server Port")
+	method := flag.String("method", "TUNNEL", "Server METHOD NORMAL,TUNNEL")
+	protocol := flag.String("protocol", "TCP", "Connect Protocol")
+	flag.Parse()
 	proxyServe := serve.ProxyServe{
 		Ip:            *ip,
 		Port:          *port,
@@ -27,5 +28,6 @@ func main() {
 		ListenAddress: fmt.Sprintf("%s:%s", *ip, *port),
 		Protocol:      *protocol,
 	}
+	fmt.Printf("Listen on %s:%s, Method %s, Traffic %s\n", *ip, *port, *method, *protocol)
 	proxyServe.Start()
 }
