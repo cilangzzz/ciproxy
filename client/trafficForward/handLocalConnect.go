@@ -26,7 +26,6 @@ func HandleServerConnect(client net.Conn, proxyHost string, tlsConfig *tls.Confi
 	//}
 
 	target, err := tls.Dial("tcp", proxyHost, tlsConfig)
-	client.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 	if err != nil {
 		log.Println(err)
 		return
