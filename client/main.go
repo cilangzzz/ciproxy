@@ -25,7 +25,11 @@ func main() {
 	localIp := flag.String("lIP", "127.0.0.1", "Proxy Server Ip Address")
 	localPort := flag.String("lPORT", "8000", "Local Proxy Port")
 	localMethod := flag.String("lMETHOD", "TUNNEL", "Local Proxy Method")
+	configEnable := flag.Bool("CONFIG", false, "")
 	flag.Parse()
+	if *configEnable {
+		log.Println("using default config file")
+	}
 	tlsUtil := util.TLSUtil{Organization: "client"}
 	cert, err := tlsUtil.GenCertificate()
 	if err != nil {
