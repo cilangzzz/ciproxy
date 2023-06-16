@@ -18,4 +18,8 @@
 # vendor/
 
 # Go workspace file
+
+#Edit File
+/.idea
+/.vs
 go.work
