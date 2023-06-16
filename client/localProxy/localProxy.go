@@ -13,7 +13,7 @@ package localProxy
 import (
 	"log"
 	"net"
-	"trafficForward/client/proxyClient"
+	"trafficForward/client/serverProxy"
 	"trafficForward/client/trafficForward"
 )
 
@@ -23,7 +23,7 @@ type (
 		Port        string
 		Method      string
 		Client      net.Conn
-		ProxyClient proxyClient.ProxyClient
+		ProxyClient serverProxy.ServerProxy
 	}
 )
 

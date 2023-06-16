@@ -8,14 +8,14 @@
   @desc: //TODO
 **/
 
-package proxyClient
+package serverProxy
 
 import (
 	"crypto/tls"
 )
 
 type (
-	ProxyClient struct {
+	ServerProxy struct {
 		Ip        string
 		Port      string
 		Method    string

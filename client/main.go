@@ -14,7 +14,7 @@ import (
 	"flag"
 	"log"
 	"trafficForward/client/localProxy"
-	"trafficForward/client/proxyClient"
+	"trafficForward/client/serverProxy"
 	"trafficForward/client/util"
 )
 
@@ -44,7 +44,7 @@ func main() {
 		Ip:     *localIp,
 		Port:   *localPort,
 		Method: *localMethod,
-		ProxyClient: proxyClient.ProxyClient{
+		ProxyClient: serverProxy.ServerProxy{
 			Ip:        *ip,
 			Port:      *port,
 			Method:    *method,
