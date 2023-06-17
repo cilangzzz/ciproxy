@@ -29,6 +29,10 @@ func main() {
 	configEnable := flag.String("config", "NORMAL", "")
 	flag.Parse()
 	fmt.Printf("proxy server %s:%s method %s\nproxy local %s:%s method%s\n", *ip, *port, *method, *localIp, *localPort, *localMethod)
+	err := util.SetProxy(*localIp + ":" + *localPort)
+	if err != nil {
+		log.Println("Auto set proxy failed, please set proxy manually")
+	}
 	if *configEnable == "NORMAL" {
 		log.Println("using default config file")
 	}

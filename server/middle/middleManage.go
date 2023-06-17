@@ -9,3 +9,20 @@
 **/
 
 package middle
+
+import "net"
+
+type Handle func(conn net.Conn, req []byte) []byte
+
+type (
+	MiddleManage struct {
+		HandleChain []Handle
+	}
+)
+
+func (m MiddleManage) Use() {
+
+}
+func (m MiddleManage) Add() {
+
+}

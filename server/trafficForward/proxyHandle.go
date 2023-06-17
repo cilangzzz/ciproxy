@@ -22,6 +22,7 @@ import (
 func HandleClientConnect(client net.Conn) {
 	buf := make([]byte, 1024)
 	_, err := client.Read(buf)
+
 	host, err := util.ParseUrl(buf)
 	println(host)
 	if err != nil {
