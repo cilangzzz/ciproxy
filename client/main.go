@@ -12,6 +12,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"log"
 	"trafficForward/client/localProxy"
 	"trafficForward/client/serverProxy"
@@ -19,15 +20,16 @@ import (
 )
 
 func main() {
-	ip := flag.String("IP", "66.151.208.210", "Proxy Server Ip Address")
-	port := flag.String("PORT", "80", "Proxy Server Port")
-	method := flag.String("METHOD", "TCP", "Proxy Server method")
-	localIp := flag.String("lIP", "127.0.0.1", "Proxy Server Ip Address")
-	localPort := flag.String("lPORT", "8000", "Local Proxy Port")
-	localMethod := flag.String("lMETHOD", "TUNNEL", "Local Proxy Method")
-	configEnable := flag.Bool("CONFIG", false, "")
+	ip := flag.String("ip", "66.151.208.210", "Proxy Server Ip Address")
+	port := flag.String("port", "80", "Proxy Server Port")
+	method := flag.String("method", "TCP", "Proxy Server method")
+	localIp := flag.String("l_ip", "127.0.0.1", "Proxy Server Ip Address")
+	localPort := flag.String("l_port", "8000", "Local Proxy Port")
+	localMethod := flag.String("l_method", "TUNNEL", "Local Proxy Method")
+	configEnable := flag.String("config", "NORMAL", "")
 	flag.Parse()
-	if *configEnable {
+	fmt.Printf("proxy server %s:%s method %s\nproxy local %s:%s method%s\n", *ip, *port, *method, *localIp, *localPort, *localMethod)
+	if *configEnable == "NORMAL" {
 		log.Println("using default config file")
 	}
 	tlsUtil := util.TLSUtil{Organization: "client"}
