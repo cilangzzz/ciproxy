@@ -12,7 +12,9 @@ package middle
 
 import "net"
 
-type Handle func(conn net.Conn, req []byte) []byte
+var MdManage MiddleManage
+
+type Handle func(conn net.Conn) []byte
 
 type (
 	MiddleManage struct {
@@ -20,9 +22,10 @@ type (
 	}
 )
 
-func (m MiddleManage) Use() {
-
+func (m MiddleManage) Use(handle Handle) {
+	m.HandleChain = append(m.HandleChain, handle)
 }
-func (m MiddleManage) Add() {
 
-}
+//func (m MiddleManage) Add() {
+//
+//}

@@ -7,7 +7,7 @@
   @desc: //TODO
 **/
 
-package trafficForward
+package trafficHandle
 
 import (
 	"bytes"
@@ -16,33 +16,28 @@ import (
 	"log"
 	"net"
 	"time"
+	"trafficForward/server/middle"
 	"trafficForward/server/util"
 )
 
 func HandleClientConnect(client net.Conn) {
+
 	buf := make([]byte, 1024)
 	_, err := client.Read(buf)
 
 	host, err := util.ParseUrl(buf)
-	println(host)
+	log.Println(host)
 	if err != nil {
 		return
 	}
 	var method, url string
-	if err != nil {
-		return
-	}
 	_, err = fmt.Sscanf(string(buf[:bytes.IndexByte(buf[:], '\n')]), "%s%s", &method, &url)
 	if err != nil {
 		return
 	}
 
 	if false {
-		println("--------------------------------errData--------------------------------")
-		fmt.Printf("%s", buf)
-		println(host)
-		println(method)
-		println("--------------------------------errData--------------------------------")
+		log.Println(buf)
 		return
 	}
 
@@ -55,12 +50,6 @@ func HandleClientConnect(client net.Conn) {
 
 }
 
-func transfer(destination io.WriteCloser, source io.ReadCloser) {
-	defer destination.Close()
-	defer source.Close()
-	io.Copy(destination, source)
-}
-
 func handleHttps(host string, client net.Conn) {
 
 	target, err := net.DialTimeout("tcp", host, 30*time.Second)
@@ -69,9 +58,36 @@ func handleHttps(host string, client net.Conn) {
 		log.Println(err)
 		return
 	}
-	client.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+	_, err = client.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	mdManage := middle.MdManage
+	for i, handle := range mdManage.HandleChain {
+		println(i)
+		println(handle)
+	}
 	go transfer(target, client)
 	go transfer(client, target)
+}
+func transfer(destination io.WriteCloser, source io.ReadCloser) {
+	defer func(destination io.WriteCloser) {
+		err := destination.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(destination)
+	defer func(source io.ReadCloser) {
+		err := source.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(source)
+	_, err := io.Copy(destination, source)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func handleHttp(host string, client net.Conn) {

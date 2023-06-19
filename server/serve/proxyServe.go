@@ -14,7 +14,7 @@ import (
 	"crypto/tls"
 	"log"
 	"net"
-	"trafficForward/server/trafficForward"
+	"trafficForward/server/trafficHandle"
 	"trafficForward/server/util"
 )
 
@@ -52,7 +52,7 @@ func (p ProxyServe) ListenTunnelTls() {
 		if err != nil {
 			log.Println(err)
 		}
-		go trafficForward.HandleClientConnect(client)
+		go trafficHandle.HandleClientConnect(client)
 	}
 }
 func (p *ProxyServe) ListenNormalHttps() {
@@ -66,6 +66,6 @@ func (p *ProxyServe) ListenNormalHttps() {
 		if err != nil {
 			log.Println(err)
 		}
-		go trafficForward.HandleClientConnect(client)
+		go trafficHandle.HandleClientConnect(client)
 	}
 }

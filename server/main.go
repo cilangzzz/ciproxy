@@ -20,7 +20,12 @@ func main() {
 	port := flag.String("port", "80", "Server Port")
 	method := flag.String("method", "TUNNEL", "Server METHOD NORMAL,TUNNEL")
 	protocol := flag.String("protocol", "TCP", "Connect Protocol")
+	config := flag.String("config", "cmd", "cmd,json,yaml for config")
 	flag.Parse()
+	switch *config {
+	case "yaml":
+
+	}
 	proxyServe := serve.ProxyServe{
 		Ip:            *ip,
 		Port:          *port,
@@ -29,5 +34,6 @@ func main() {
 		Protocol:      *protocol,
 	}
 	fmt.Printf("Listen on %s:%s, Method %s, Traffic %s\n", *ip, *port, *method, *protocol)
+
 	proxyServe.Start()
 }
