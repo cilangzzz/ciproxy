@@ -8,26 +8,24 @@
 
 ###### <center>Introduce</center>
 
-###### 							中文文档请看README.cn.md
-
 <center>use tcp implement, not http server, base on golang</center>
 </div>
 
-###### install
+###### 安装
 
 ```makefile
-#makefile for server
+#服务器
 
 apt install go
 
 git clone https://github.com/OpencvLZG/CiProxy
 
-#for server
+#服务端
 cd CiProxy/server 
 
 go build main.go
 
-#for client
+#客户端
 cd CiProxy/client
 
 go build main.go
@@ -36,14 +34,15 @@ go build main.go
 ###### running
 
 ```makefile
-#for server
+#服务器
 cd CiProxy/server 
-# -ip (server ip default all interface) -port (server port) -method (direct and tunnel)
+# -ip 服务器ip默认全部接口 -port 服务器监听端口 -method 直连模式与加密模式
 ./main
+
 
 #for client(need enable proxy server maually)
 cd CiProxy/client
-# -ip (server ip) -port (server port)
+# -ip 服务器ip -port 服务器端口
 ./main
 
 ```
