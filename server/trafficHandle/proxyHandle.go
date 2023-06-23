@@ -64,13 +64,13 @@ func handleHttps(host string, client net.Conn) {
 		return
 	}
 	mdManage := middle.MdManage
-	for i, handle := range mdManage.HandleChain {
-		println(i)
-		println(handle)
+	for _, handle := range mdManage.HandleChain {
+		handle(client, target)
 	}
 	go transfer(target, client)
 	go transfer(client, target)
 }
+
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
 	defer func(destination io.WriteCloser) {
 		err := destination.Close()
@@ -89,7 +89,39 @@ func transfer(destination io.WriteCloser, source io.ReadCloser) {
 		log.Println(err)
 	}
 }
+func tranforwardHandle(source net.Conn, destination net.Conn) {
+	defer func(source net.Conn) {
+		err := source.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(source)
+	defer func(destination net.Conn) {
+		err := destination.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}(destination)
+	buf := make([]byte, 32*1024)
+	for {
+		n, err := source.Read(buf)
+		if err != nil {
+			log.Println(err)
+		}
+		for n == len(buf) {
+			buf = append(buf, make([]byte, 1024)...)
+			n, err = source.Read(buf[len(buf)-1024:])
+			if err != nil {
+				log.Println(err)
+			}
+		}
 
+		_, err = destination.Write(buf[:n])
+		if err != nil {
+			log.Println(err)
+		}
+	}
+}
 func handleHttp(host string, client net.Conn) {
 	target, err := net.DialTimeout("tcp", host, 60*time.Second)
 	if err != nil {

@@ -12,6 +12,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
+	"trafficForward/server/middle"
 	"trafficForward/server/serve"
 )
 
@@ -34,6 +36,9 @@ func main() {
 		Protocol:      *protocol,
 	}
 	fmt.Printf("Listen on %s:%s, Method %s, Traffic %s\n", *ip, *port, *method, *protocol)
-
+	middleware := middle.MdManage
+	middleware.Add(func(client net.Conn, target net.Conn) {
+		// Some regular u want implement
+	})
 	proxyServe.Start()
 }

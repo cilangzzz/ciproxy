@@ -10,11 +10,15 @@
 
 package middle
 
-import "net"
+import (
+	"log"
+	"net"
+	"trafficForward/server/util"
+)
 
 var MdManage MiddleManage
 
-type Handle func(conn net.Conn) []byte
+type Handle func(client net.Conn, target net.Conn)
 
 type (
 	MiddleManage struct {
@@ -22,10 +26,35 @@ type (
 	}
 )
 
-func (m MiddleManage) Use(handle Handle) {
+func (m MiddleManage) Add(handle Handle) {
 	m.HandleChain = append(m.HandleChain, handle)
 }
 
-//func (m MiddleManage) Add() {
-//
-//}
+func (m MiddleManage) DenyOnly(host string) {
+	m.Add(func(client net.Conn, target net.Conn) {
+		if target.RemoteAddr().String() == host {
+			err := target.Close()
+			if err != nil {
+				log.Println(err)
+			}
+			_, err = client.Write(util.GenerateHttp("<h1>Banned Host</h1>"))
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	})
+}
+func (m MiddleManage) PermitOnly(host string) {
+	m.Add(func(client net.Conn, target net.Conn) {
+		if target.RemoteAddr().String() != host {
+			err := target.Close()
+			if err != nil {
+				log.Println(err)
+			}
+			_, err = client.Write(util.GenerateHttp("<h1>Banned Host</h1>"))
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	})
+}
