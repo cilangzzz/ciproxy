@@ -14,6 +14,8 @@ import (
 	"crypto/tls"
 	"log"
 	"net"
+	"net/http"
+	"trafficForward/server/httpHandle"
 	"trafficForward/server/trafficHandle"
 	"trafficForward/server/util"
 )
@@ -34,6 +36,14 @@ func (p *ProxyServe) Start() {
 	case "TUNNEL":
 		p.ListenTunnelTls()
 	}
+}
+func (p ProxyServe) ListenPortTranforward() {
+	portHandle := httpHandle.PortHandle{}
+	err := http.ListenAndServe(p.Ip, portHandle)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 func (p ProxyServe) ListenTunnelTls() {
 	tlsConfig := util.TLSUtil{Organization: "cilang"}
