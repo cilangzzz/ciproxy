@@ -15,6 +15,7 @@ import (
 	"net"
 	"trafficForward/server/middle"
 	"trafficForward/server/serve"
+	"trafficForward/server/util"
 )
 
 func main() {
@@ -23,11 +24,14 @@ func main() {
 	method := flag.String("method", "NORMAL", "Server METHOD NORMAL,TUNNEL, SNIFF")
 	protocol := flag.String("protocol", "TCP", "Connect Protocol")
 	config := flag.String("config", "cmd", "cmd,json,yaml for config")
+	logPath := flag.String("log", "log/proxy.log", "log file path")
+	util.LogInit(*logPath)
 	flag.Parse()
 	switch *config {
 	case "yaml":
 
 	}
+
 	proxyServe := serve.ProxyServe{
 		Ip:            *ip,
 		Port:          *port,

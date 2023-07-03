@@ -22,4 +22,6 @@
 #Edit File
 /.idea
 /.vs
+*.log
 go.work
+

@@ -11,11 +11,11 @@ import (
 )
 
 func HandleClientConnect(client net.Conn) {
-
 	buf := make([]byte, 1024)
 	_, err := client.Read(buf)
 
 	host, err := util.ParseUrl(buf)
+	println(string(buf))
 	log.Println(host)
 	if err != nil {
 		return
