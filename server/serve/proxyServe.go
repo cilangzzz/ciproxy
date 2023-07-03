@@ -33,6 +33,8 @@ func (p *ProxyServe) Start() {
 	switch p.Method {
 	case "NORMAL":
 		p.ListenNormalHttps()
+	case "SNIFF":
+		p.ListenHttpsListen()
 	case "TUNNEL":
 		p.ListenTunnelTls()
 	}
@@ -46,7 +48,7 @@ func (p ProxyServe) ListenPortTranforward() {
 
 }
 func (p ProxyServe) ListenTunnelTls() {
-	tlsConfig := util.TLSUtil{Organization: "cilang"}
+	tlsConfig := util.TLSUtil{Organization: "CiproxyOrganization"}
 	cert, err := tlsConfig.GenCertificate()
 	if err != nil {
 		log.Fatal(err)
@@ -77,5 +79,25 @@ func (p *ProxyServe) ListenNormalHttps() {
 			log.Println(err)
 		}
 		go trafficHandle.HandleClientConnect(client)
+	}
+}
+
+func (p *ProxyServe) ListenHttpsListen() {
+	tlsConfig := util.TLSUtil{Organization: "CiproxyOrganization"}
+	cert, err := tlsConfig.GenCertificate()
+	if err != nil {
+		log.Fatal(err)
+	}
+	config := &tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
+	ln, err := tls.Listen("tcp", p.ListenAddress, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		client, err := ln.Accept()
+		go httpHandle.HandleClientConnect(client)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }

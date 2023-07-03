@@ -20,7 +20,7 @@ import (
 func main() {
 	ip := flag.String("ip", "", "Server Ip Address")
 	port := flag.String("port", "6677", "Server Port")
-	method := flag.String("method", "NORMAL", "Server METHOD NORMAL,TUNNEL")
+	method := flag.String("method", "NORMAL", "Server METHOD NORMAL,TUNNEL, SNIFF")
 	protocol := flag.String("protocol", "TCP", "Connect Protocol")
 	config := flag.String("config", "cmd", "cmd,json,yaml for config")
 	flag.Parse()
