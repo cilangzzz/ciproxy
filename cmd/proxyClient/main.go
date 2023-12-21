@@ -17,6 +17,7 @@ import (
 	"trafficForward/internal/proxyClient/localProxy"
 	"trafficForward/internal/proxyClient/serverProxy"
 	util2 "trafficForward/internal/proxyClient/util"
+	"trafficForward/internal/util"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	configEnable := flag.String("config", "NORMAL", "")
 	flag.Parse()
 	fmt.Printf("proxy server %s:%s method %s\nproxy local %s:%s method%s\n", *ip, *port, *method, *localIp, *localPort, *localMethod)
-	err := util2.SetProxy(*localIp + ":" + *localPort)
+	err := util.SetProxy(*localIp + ":" + *localPort)
 	if err != nil {
 		log.Println("Auto set proxy failed, please set proxy manually")
 	}

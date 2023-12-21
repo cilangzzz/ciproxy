@@ -11,12 +11,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
-	"trafficForward/internal/proxyServer/middle"
+	"trafficForward/internal/proxyServer/middleHandle"
 	"trafficForward/internal/proxyServer/serve"
-	"trafficForward/internal/proxyServer/util"
+	"trafficForward/internal/util"
 )
 
 func main() {
@@ -34,14 +33,13 @@ func main() {
 	}
 
 	proxyServe := serve.ProxyServe{
-		Ip:            *ip,
-		Port:          *port,
-		Method:        *method,
-		ListenAddress: fmt.Sprintf("%s:%s", *ip, *port),
-		Protocol:      *protocol,
+		Ip:       *ip,
+		Port:     *port,
+		Method:   *method,
+		Protocol: *protocol,
 	}
 	log.Printf("Listen on %s:%s, Method %s, Traffic %s\n", *ip, *port, *method, *protocol)
-	middleware := middle.MdManage
+	middleware := middleHandle.MdManage
 	middleware.Add(func(client net.Conn, target net.Conn) {
 		// Some regular u want implement
 	})

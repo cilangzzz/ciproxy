@@ -17,12 +17,12 @@ import (
 )
 
 const (
-	INTERNET_PER_CONN_FLAGS               = 1
-	INTERNET_PER_CONN_PROXY_SERVER        = 2
-	INTERNET_PER_CONN_PROXY_BYPASS        = 3
-	INTERNET_OPTION_REFRESH               = 37
-	INTERNET_OPTION_SETTINGS_CHANGED      = 39
-	INTERNET_OPTION_PER_CONNECTION_OPTION = 75
+	InternetPerConnFlags              = 1
+	InternetPerConnProxyServer        = 2
+	InternetPerConnProxyBypass        = 3
+	InternetOptionRefresh             = 37
+	InternetOptionSettingsChanged     = 39
+	InternetOptionPerConnectionOption = 75
 )
 
 /*
@@ -40,12 +40,12 @@ const (
 	  DWORD dwHighDateTime;
 	} FILETIME, *PFILETIME, *LPFILETIME;
 */
-type INTERNET_PER_CONN_OPTION struct {
+type InternetPerConnOption struct {
 	dwOption uint32
 	dwValue  uint64 // 注意 32位 和 64位 struct 和 union 内存对齐
 }
 
-type INTERNET_PER_CONN_OPTION_LIST struct {
+type InternetPerConnOptionList struct {
 	dwSize        uint32
 	pszConnection *uint16
 	dwOptionCount uint32
@@ -63,19 +63,19 @@ func SetProxy(proxy string) error {
 		return fmt.Errorf(fmt.Sprintf("GetProcAddress InternetQueryOptionW Error: %s", err))
 	}
 
-	options := [3]INTERNET_PER_CONN_OPTION{}
-	options[0].dwOption = INTERNET_PER_CONN_FLAGS
+	options := [3]InternetPerConnOption{}
+	options[0].dwOption = InternetPerConnFlags
 	if proxy == "" {
 		options[0].dwValue = 1
 	} else {
 		options[0].dwValue = 2
 	}
-	options[1].dwOption = INTERNET_PER_CONN_PROXY_SERVER
+	options[1].dwOption = InternetPerConnProxyServer
 	options[1].dwValue = uint64(uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(proxy))))
-	options[2].dwOption = INTERNET_PER_CONN_PROXY_BYPASS
+	options[2].dwOption = InternetPerConnProxyBypass
 	options[2].dwValue = uint64(uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;172.32.*;192.168.*"))))
 
-	list := INTERNET_PER_CONN_OPTION_LIST{}
+	list := InternetPerConnOptionList{}
 	list.dwSize = uint32(unsafe.Sizeof(list))
 	list.pszConnection = nil
 	list.dwOptionCount = 3
@@ -91,15 +91,15 @@ func SetProxy(proxy string) error {
 		return nil
 	}
 
-	err = callInternetOptionW(INTERNET_OPTION_PER_CONNECTION_OPTION, uintptr(unsafe.Pointer(&list)), uintptr(unsafe.Sizeof(list)))
+	err = callInternetOptionW(InternetOptionPerConnectionOption, uintptr(unsafe.Pointer(&list)), uintptr(unsafe.Sizeof(list)))
 	if err != nil {
 		return fmt.Errorf("INTERNET_OPTION_PER_CONNECTION_OPTION Error: %s", err)
 	}
-	err = callInternetOptionW(INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
+	err = callInternetOptionW(InternetOptionSettingsChanged, 0, 0)
 	if err != nil {
 		return fmt.Errorf("INTERNET_OPTION_SETTINGS_CHANGED Error: %s", err)
 	}
-	err = callInternetOptionW(INTERNET_OPTION_REFRESH, 0, 0)
+	err = callInternetOptionW(InternetOptionRefresh, 0, 0)
 	if err != nil {
 		return fmt.Errorf("INTERNET_OPTION_REFRESH Error: %s", err)
 	}
