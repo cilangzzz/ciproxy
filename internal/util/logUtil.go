@@ -23,6 +23,8 @@ func LogInit(path string) {
 		panic(err)
 	}
 	log.SetOutput(logFile) // 将文件设置为log输出的文件
-	log.SetPrefix("[qSkipTool]")
+	//currentTime := time.Now().String()
+	//log.SetPrefix("[" + currentTime + "]")
+	log.SetPrefix("[CiProxy]")
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.LUTC)
 }
