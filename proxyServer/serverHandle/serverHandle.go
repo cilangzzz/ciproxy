@@ -11,9 +11,9 @@
 package serverHandle
 
 import (
+	"github.com/opencvlzg/ciproxy/proxyServer/proxyHandle"
 	"log"
 	"net"
-	"trafficForward/internal/proxyServer/proxyHandle"
 )
 
 func errLog(msg string, err error) {
@@ -24,14 +24,18 @@ func errLog(msg string, err error) {
 func HttpProxyServer(host string) {
 	ln, err := net.Listen("tcp", host)
 	if err != nil {
+		errLog("listen serve launch failed ", err)
 		return
 	}
-	c, err := ln.Accept()
-	if err != nil {
-		errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
-		return
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
+			return
+		}
+		go proxyHandle.HttpProxyHandle(c)
 	}
-	go proxyHandle.HttpProxyHandle(c)
+
 }
 
 // HttpsProxyServer https server Https代理服务
@@ -40,10 +44,12 @@ func HttpsProxyServer(host string) {
 	if err != nil {
 		return
 	}
-	c, err := ln.Accept()
-	if err != nil {
-		errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
-		return
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
+			return
+		}
+		go proxyHandle.HttpsProxyHandle(c)
 	}
-	go proxyHandle.HttpProxyHandle(c)
 }

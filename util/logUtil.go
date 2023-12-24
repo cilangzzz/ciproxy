@@ -7,16 +7,14 @@ import (
 
 func LogInit(path string) {
 	_, err := os.Stat(path)
-	println()
 	if err != nil {
-		println("log file setting err")
+		println("log path not exist auto create")
 		err := os.Mkdir("./log/", os.ModePerm)
 		if err != nil {
 			println(err)
 		}
 	}
 	filePath := "./" + path
-	println(filePath)
 	logFile, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		println("log file setting err")

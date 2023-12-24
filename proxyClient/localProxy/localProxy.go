@@ -13,8 +13,8 @@ package localProxy
 import (
 	"log"
 	"net"
-	"trafficForward/internal/proxyClient/serverProxy"
-	"trafficForward/internal/proxyClient/trafficForward"
+	"trafficForward/proxyClient/serverProxy"
+	"trafficForward/proxyClient/trafficForward"
 )
 
 type (

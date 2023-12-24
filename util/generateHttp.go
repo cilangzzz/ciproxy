@@ -14,7 +14,7 @@ import "time"
 
 func GenerateHttp(data string) []byte {
 	httpData := "HTTP/1.1 200 OK\n" +
-		"Date: " + time.Now().String() +"\n" +
+		"Date: " + time.Now().String() + "\n" +
 		"Content-Type: text/html; charset=UTF-8\n" +
 		"Content-Length: 11\n\n" +
 		data

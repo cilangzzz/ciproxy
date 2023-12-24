@@ -8,11 +8,13 @@
   @desc: //TODO
 **/
 
-package constant
+package proxyMethod
 
 const (
-	proxyVersion = "v0.0.0"
-	proxyMode    = "Debug"
-
-	proxyOrganization = ""
+	HttpProxy       = "HttpProxy"
+	HttpsProxy      = "HttpsProxy"
+	HttpsSniffProxy = "HttpsSniff"
+	TcpNormalProxy  = "TcpNormal"
+	TcpTunnelProxy  = "TcpTunnel"
+	PortProxy       = "PortProxy"
 )
