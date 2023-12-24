@@ -13,11 +13,10 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"github.com/opencvlzg/ciproxy/proxyClient/localProxy"
+	"github.com/opencvlzg/ciproxy/proxyClient/serverProxy"
+	"github.com/opencvlzg/ciproxy/util"
 	"log"
-	"trafficForward/internal/proxyClient/localProxy"
-	"trafficForward/internal/proxyClient/serverProxy"
-	util2 "trafficForward/internal/proxyClient/util"
-	"trafficForward/internal/util"
 )
 
 func main() {
@@ -37,7 +36,7 @@ func main() {
 	if *configEnable == "NORMAL" {
 		log.Println("using default config file")
 	}
-	tlsUtil := util2.TLSUtil{Organization: "client"}
+	tlsUtil := util.TLSUtil{Organization: "client"}
 	cert, err := tlsUtil.GenCertificate()
 	if err != nil {
 		log.Fatal(err)

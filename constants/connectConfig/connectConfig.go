@@ -8,10 +8,11 @@
   @desc: //TODO
 **/
 
-package constant
+package connectConfig
 
 import "time"
 
 const (
-	DefaultOutTime = 10 * time.Second
+	DefaultConnectProtocol = "Tcp"
+	DefaultOutTime         = 10 * time.Second
 )

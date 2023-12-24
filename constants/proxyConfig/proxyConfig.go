@@ -8,13 +8,11 @@
   @desc: //TODO
 **/
 
-package constant
+package proxyConfig
 
 const (
-	HttpProxy       = "HttpProxy"
-	HttpsProxy      = "HttpsProxy"
-	HttpsSniffProxy = "HttpsSniff"
-	TcpNormalProxy  = "TcpNormal"
-	TcpTunnelProxy  = "TcpTunnel"
-	PortProxy       = "PortProxy"
+	ProxyVersion = "v0.0.0"
+	ProxyMode    = "Debug"
+
+	ProxyOrganization = "www.cilang.buzz"
 )

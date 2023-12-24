@@ -11,37 +11,30 @@ package main
 
 import (
 	"flag"
-	"log"
+	"github.com/opencvlzg/ciproxy/constants/proxyMethod"
+	"github.com/opencvlzg/ciproxy/proxyServer/middleHandle"
+	"github.com/opencvlzg/ciproxy/proxyServer/serve"
 	"net"
-	"trafficForward/internal/proxyServer/middleHandle"
-	"trafficForward/internal/proxyServer/serve"
-	"trafficForward/internal/util"
 )
 
 func main() {
+
 	ip := flag.String("ip", "", "Server Ip Address")
 	port := flag.String("port", "6677", "Server Port")
-	method := flag.String("method", "NORMAL", "Server METHOD NORMAL,TUNNEL, SNIFF")
+	method := flag.String("method", proxyMethod.HttpsProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
 	protocol := flag.String("protocol", "TCP", "Connect Protocol")
-	config := flag.String("config", "cmd", "cmd,json,yaml for config")
 	logPath := flag.String("log", "log/proxy.log", "log file path")
-	util.LogInit(*logPath)
 	flag.Parse()
-	switch *config {
-	case "yaml":
-
-	}
-
 	proxyServe := serve.ProxyServe{
 		Ip:       *ip,
 		Port:     *port,
 		Method:   *method,
 		Protocol: *protocol,
+		LogPath:  *logPath,
 	}
-	log.Printf("Listen on %s:%s, Method %s, Traffic %s\n", *ip, *port, *method, *protocol)
 	middleware := middleHandle.MdManage
 	middleware.Add(func(client net.Conn, target net.Conn) {
-		// Some regular u want implement
+		// Todo Some regular u want implement
 	})
 	proxyServe.Start()
 }

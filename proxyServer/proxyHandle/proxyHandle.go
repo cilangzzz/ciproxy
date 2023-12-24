@@ -12,12 +12,11 @@ package proxyHandle
 
 import (
 	"bufio"
+	"github.com/opencvlzg/ciproxy/constants/connectConfig"
+	"github.com/opencvlzg/ciproxy/proxyServer/trafficHandle"
 	"log"
 	"net"
 	"net/http"
-	"trafficForward/internal/constant"
-	"trafficForward/internal/proxyServer/middleHandle"
-	"trafficForward/internal/proxyServer/trafficHandle"
 )
 
 func errLog(msg string, err error) {
@@ -26,7 +25,7 @@ func errLog(msg string, err error) {
 
 // 转发流量 内部使用
 func proxyTransfer(c net.Conn, s net.Conn) {
-	go middleHandle.MiddleHandle(c, s)
+	//go middleHandle.MiddleHandle(c, s)
 	go trafficHandle.Transfer(c, s)
 	go trafficHandle.Transfer(s, c)
 }
@@ -38,14 +37,10 @@ func HttpProxyHandle(c net.Conn) {
 	if err != nil {
 		return
 	}
-	s, err := net.DialTimeout("tcp", request.Host, constant.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
-	}
-	mdManage := middleHandle.MdManage
-	for _, handle := range mdManage.HandleChain {
-		handle(c, s)
 	}
 	proxyTransfer(c, s)
 }
@@ -64,7 +59,7 @@ func HttpsProxyHandle(c net.Conn) {
 	if err != nil {
 		return
 	}
-	s, err := net.DialTimeout("tcp", request.Host, constant.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
@@ -77,7 +72,7 @@ func HttpsProxyHandle(c net.Conn) {
 			return
 		}
 	default:
-		
+
 	}
 	proxyTransfer(c, s)
 }

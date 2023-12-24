@@ -11,10 +11,13 @@
 package serve
 
 import (
+	"fmt"
+	"github.com/opencvlzg/ciproxy/constants/proxyConfig"
+	"github.com/opencvlzg/ciproxy/constants/proxyMethod"
+	"github.com/opencvlzg/ciproxy/proxyServer/middleHandle"
+	"github.com/opencvlzg/ciproxy/proxyServer/serverHandle"
+	"github.com/opencvlzg/ciproxy/util"
 	"log"
-	"trafficForward/internal/constant"
-	"trafficForward/internal/proxyServer/middleHandle"
-	"trafficForward/internal/proxyServer/serverHandle"
 )
 
 type ProxyServe struct {
@@ -23,19 +26,27 @@ type ProxyServe struct {
 	Method   string `json:"method,omitempty"`
 	Protocol string `json:"protocol,omitempty"`
 	Host     string `json:"host,omitempty"`
+	LogPath  string `json:"logPath,omitempty"`
+}
+
+// init 初始化
+func (p ProxyServe) init() {
+	util.LogInit(p.LogPath)
+	p.Host = p.Ip + ":" + p.Port
+	p.printInfo()
 }
 
 // Start 服务启动主入口
 func (p *ProxyServe) Start() {
-	p.Host = p.Ip + ":" + p.Port
+	p.init()
 	switch p.Method {
-	case constant.HttpProxy:
+	case proxyMethod.HttpProxy:
 		p.HttpProxyListen()
-	case constant.HttpsProxy:
+	case proxyMethod.HttpsProxy:
 		p.HttpsProxyListen()
-	case constant.HttpsSniffProxy:
+	case proxyMethod.HttpsSniffProxy:
 		p.HttpsSniffProxyListen()
-	case constant.TcpTunnelProxy:
+	case proxyMethod.TcpTunnelProxy:
 		p.TcpTunnelTlsProxyListen()
 	default:
 		log.Println("mainServe: No proxy method had been chose")
@@ -67,6 +78,17 @@ func (p ProxyServe) HttpsSniffProxyListen() {
 
 }
 
+// printInfo 打印信息
+func (p ProxyServe) printInfo() {
+	// 3d logo
+	println()
+	println("/\\  _`\\    __/\\  _`\\                                \n\\ \\ \\/\\_\\ /\\_\\ \\ \\L\\ \\_ __   ___   __  _  __  __    \n \\ \\ \\/_/_\\/\\ \\ \\ ,__/\\`'__\\/ __`\\/\\ \\/'\\/\\ \\/\\ \\   \n  \\ \\ \\L\\ \\\\ \\ \\ \\ \\/\\ \\ \\//\\ \\L\\ \\/>  </\\ \\ \\_\\ \\  \n   \\ \\____/ \\ \\_\\ \\_\\ \\ \\_\\\\ \\____//\\_/\\_\\\\/`____ \\ \n    \\/___/   \\/_/\\/_/  \\/_/ \\/___/ \\//\\/_/ `/___/> \\\n                                              /\\___/\n                                              \\/__/ ")
+	fmt.Printf("CiProxy Version %s, Mode %s\n", proxyConfig.ProxyVersion, proxyConfig.ProxyMode)
+	println("log path setting to" + p.LogPath)
+	fmt.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
+	log.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n\n", p.Ip, p.Port, p.Method, p.Protocol)
+
+}
 func (p ProxyServe) ListenTunnelTls() {
 	//	tlsConfig := util.TLSUtil{Organization: "CiproxyOrganization"}
 	//	cert, err := tlsConfig.GenCertificate()
