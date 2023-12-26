@@ -17,7 +17,7 @@ import (
 )
 
 func errLog(msg string, err error) {
-	log.Println("serverHandle:" + msg + "err:" + err.Error())
+	log.Println("serverHandle:" + msg + " err:" + err.Error())
 }
 
 // HttpProxyServer normal http server 普通的http代理服务
@@ -42,6 +42,7 @@ func HttpProxyServer(host string) {
 func HttpsProxyServer(host string) {
 	ln, err := net.Listen("tcp", host)
 	if err != nil {
+		errLog("listen serve launch failed ", err)
 		return
 	}
 	for {
@@ -51,5 +52,22 @@ func HttpsProxyServer(host string) {
 			return
 		}
 		go proxyHandle.HttpsProxyHandle(c)
+	}
+}
+
+// HttpsSniffProxyServer https 中间人欺骗
+func HttpsSniffProxyServer(host string) {
+	ln, err := net.Listen("tcp", host)
+	if err != nil {
+		errLog("listen serve launch failed ", err)
+		return
+	}
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
+			return
+		}
+		go proxyHandle.HttpsSniffProxyHandle(c)
 	}
 }

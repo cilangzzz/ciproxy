@@ -12,15 +12,17 @@ package proxyHandle
 
 import (
 	"bufio"
+	"crypto/tls"
 	"github.com/opencvlzg/ciproxy/constants/connectConfig"
 	"github.com/opencvlzg/ciproxy/proxyServer/trafficHandle"
+	"github.com/opencvlzg/ciproxy/util"
 	"log"
 	"net"
 	"net/http"
 )
 
 func errLog(msg string, err error) {
-	log.Println("proxyHandle:" + msg + "err:" + err.Error())
+	log.Println("proxyHandle:" + msg + " err:" + err.Error())
 }
 
 // 转发流量 内部使用
@@ -45,13 +47,6 @@ func HttpProxyHandle(c net.Conn) {
 	proxyTransfer(c, s)
 }
 
-// tlsConfig := util2.TLSUtil{Organization: "CiproxyOrganization"}
-// cert, err := tlsConfig.GenCertificate()
-// if err != nil {
-// log.Fatal(err)
-// }
-// config := &tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
-
 // HttpsProxyHandle Https处理
 func HttpsProxyHandle(c net.Conn) {
 	buf := bufio.NewReader(c)
@@ -75,4 +70,122 @@ func HttpsProxyHandle(c net.Conn) {
 
 	}
 	proxyTransfer(c, s)
+}
+
+// HttpsSniffProxyHandle https中间人处理
+func HttpsSniffProxyHandle(c net.Conn) {
+	cReader := bufio.NewReader(c)
+	request, err := http.ReadRequest(cReader)
+	if err != nil {
+		return
+	}
+	tlsCnf, err := util.GenerateTlsConfig(request.Host)
+	if err != nil {
+		return
+	}
+	tlsS, err := tls.Dial("tcp", request.Host, tlsCnf)
+	if err != nil {
+		errLog("remote host connect failed", err)
+		return
+	}
+	_, err = c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+	if err != nil {
+		errLog("write hello failed"+request.Host+request.Method, err)
+		return
+	}
+	tlsC, err := upgradeTls(c, tlsCnf)
+	if err != nil {
+		return
+	}
+	go proxyTransfer(tlsC, tlsS)
+	//if err != nil {
+	//	//errLog("http encode failed", err)
+	//	//return
+	//}
+	//switch httpReq.Method {
+	//case http.MethodConnect:
+	//
+
+	//}fmt.Printf("%s", request)
+
+}
+
+// TestProxyHandle 测试代理头
+//func TestProxyHandle(c net.Conn) {
+//	buf := make([]byte, 512)
+//	_, err := c.Read(buf)
+//	fmt.Printf("%s", buf)
+//	_, err = c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+//	if err != nil {
+//		//return
+//	}
+//
+//	cert, err := util.LoadCertificate("./cert/www.cilang.buzz/inter.crt", "./cert/www.cilang.buzz/inter.key")
+//	if err != nil {
+//		errLog("load ca certificate failed", err)
+//		panic(err)
+//		return
+//	}
+//	conf := &tls.Config{
+//		Certificates:       []tls.Certificate{*cert},
+//		InsecureSkipVerify: true,
+//		MinVersion:         tls.VersionTLS12,
+//		MaxVersion:         tls.VersionTLS13,
+//	}
+//	_, err = upgradeTls(c, conf)
+//	if err != nil {
+//		return
+//	}
+//}
+
+// upgradeTls 从tcp升级到tls连接
+func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
+
+	tlsC := tls.Server(c, conf)
+	defer func() {
+		_ = tlsC.Close()
+	}()
+	err := tlsC.Handshake()
+	if err != nil {
+		errLog("tls handshake failed", err)
+		return nil, err
+	}
+
+	return tlsC, nil
+}
+
+// httpsTunnelResponse CONNECT 方法响应
+func httpsTunnelResponse(c net.Conn) {
+	_, err := c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	if err != nil {
+		errLog("write hello failed", err)
+		return
+	}
+}
+
+// httpsTlsResponse 通信协议识别
+func httpsTlsResponse(c net.Conn) {
+	conf, err := util.GenerateTlsConfig("www.figma.com")
+	if err != nil {
+		return
+	}
+	tlsC, err := upgradeTls(c, conf)
+	if err != nil {
+		errLog("upgrade tls failed", err)
+		return
+	}
+	//buf := bufio.NewReader(tlsC)
+	//request, err := http.ReadRequest(buf)
+	//if err != nil {
+	//	errLog("https encode filed", err)
+	//	return
+	//}
+	//println(request.Body)
+	println("握手成功")
+	tlsS, err := tls.Dial("tcp", "www.figma.com", conf)
+	if err != nil {
+		errLog("remote host connect failed", err)
+		return
+	}
+	go proxyTransfer(tlsC, tlsS)
 }

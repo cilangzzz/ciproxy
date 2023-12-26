@@ -12,7 +12,7 @@ package util
 
 import "time"
 
-func GenerateHttp(data string) []byte {
+func HttpsCONNECTOK(data string) []byte {
 	httpData := "HTTP/1.1 200 OK\n" +
 		"Date: " + time.Now().String() + "\n" +
 		"Content-Type: text/html; charset=UTF-8\n" +

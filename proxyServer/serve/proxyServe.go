@@ -30,7 +30,7 @@ type ProxyServe struct {
 }
 
 // init 初始化
-func (p ProxyServe) init() {
+func (p *ProxyServe) init() {
 	util.LogInit(p.LogPath)
 	p.Host = p.Ip + ":" + p.Port
 	p.printInfo()
@@ -75,18 +75,17 @@ func (p ProxyServe) TcpTunnelTlsProxyListen() {
 
 // HttpsSniffProxyListen Https代理欺骗监听
 func (p ProxyServe) HttpsSniffProxyListen() {
-
+	serverHandle.HttpsSniffProxyServer(p.Host)
 }
 
 // printInfo 打印信息
 func (p ProxyServe) printInfo() {
 	// 3d logo
-	println()
 	println("/\\  _`\\    __/\\  _`\\                                \n\\ \\ \\/\\_\\ /\\_\\ \\ \\L\\ \\_ __   ___   __  _  __  __    \n \\ \\ \\/_/_\\/\\ \\ \\ ,__/\\`'__\\/ __`\\/\\ \\/'\\/\\ \\/\\ \\   \n  \\ \\ \\L\\ \\\\ \\ \\ \\ \\/\\ \\ \\//\\ \\L\\ \\/>  </\\ \\ \\_\\ \\  \n   \\ \\____/ \\ \\_\\ \\_\\ \\ \\_\\\\ \\____//\\_/\\_\\\\/`____ \\ \n    \\/___/   \\/_/\\/_/  \\/_/ \\/___/ \\//\\/_/ `/___/> \\\n                                              /\\___/\n                                              \\/__/ ")
 	fmt.Printf("CiProxy Version %s, Mode %s\n", proxyConfig.ProxyVersion, proxyConfig.ProxyMode)
-	println("log path setting to" + p.LogPath)
+	println("Log path setting to " + p.LogPath)
 	fmt.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
-	log.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n\n", p.Ip, p.Port, p.Method, p.Protocol)
+	log.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
 
 }
 func (p ProxyServe) ListenTunnelTls() {
@@ -124,7 +123,7 @@ func (p ProxyServe) ListenTunnelTls() {
 	//	}
 }
 
-func (p *ProxyServe) ListenHttpsListen() {
+func (p ProxyServe) ListenHttpsListen() {
 	//tlsConfig := util.TLSUtil{Organization: "CiproxyOrganization"}
 	//cert, err := tlsConfig.GenCertificate()
 	//if err != nil {
