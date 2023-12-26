@@ -15,7 +15,7 @@ import (
 )
 
 func errLog(msg string, err error) {
-	log.Println("proxyHandle:" + msg + "err:" + err.Error())
+	log.Println("proxyHandle:" + msg + " err:" + err.Error())
 }
 
 // Transfer traffic transfer 流量Io转发

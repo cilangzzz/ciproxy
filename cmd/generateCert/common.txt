@@ -1,0 +1,11 @@
+// generate private key 生成私钥
+openssl genrsa -out  ./cert/private.pem 2048
+// generate public key 生成公钥
+openssl rsa -in ./cert/private.pem -pubout -out ./cert/public.pem
+// generate certificate req 生成证书请求
+openssl req -new -key ./cert/private.pem -out ./cert/root.csr
+// generate certificate crt 生成证书
+openssl x509 -req -days 365 -in ./cert/root.csr -signkey ./cert/private.pem -out ./cert/root.crt
+
+
+

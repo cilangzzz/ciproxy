@@ -13,7 +13,7 @@ package proxyMethod
 const (
 	HttpProxy       = "HttpProxy"
 	HttpsProxy      = "HttpsProxy"
-	HttpsSniffProxy = "HttpsSniff"
+	HttpsSniffProxy = "HttpsSniffProxy"
 	TcpNormalProxy  = "TcpNormal"
 	TcpTunnelProxy  = "TcpTunnel"
 	PortProxy       = "PortProxy"
