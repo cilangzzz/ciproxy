@@ -7,6 +7,7 @@
   @desc: //TODO
 **/
 
+// Package util tls 配置处理
 package util
 
 import (
@@ -26,6 +27,7 @@ import (
 )
 
 // LoadCertificateTls 加载证书
+// 通过tls.load加载证书
 func LoadCertificateTls(crtPath string, keyPath string) (*tls.Certificate, error) {
 	cert, err := tls.LoadX509KeyPair(crtPath, keyPath)
 	if err != nil {
@@ -36,6 +38,7 @@ func LoadCertificateTls(crtPath string, keyPath string) (*tls.Certificate, error
 }
 
 // LoadCertificateX509Data 加载证书私钥数据
+// 通过os加载证书数据
 func LoadCertificateX509Data(crtPath string, keyPath string) (*x509.Certificate, string, error) {
 	rootCrtData, err := os.ReadFile(crtPath)
 	if err != nil {
@@ -59,8 +62,12 @@ func LoadCertificateX509Data(crtPath string, keyPath string) (*x509.Certificate,
 }
 
 // GenerateCaCertificate 生成Ca证书
+// tls 配置生成 参考 github.com/ouqiang/goproxy
 func GenerateCaCertificate(rootCrt *tls.Certificate, host string) (*tls.Certificate, error) {
 	host = strings.TrimSuffix(host, ":443")
+	san := make([]string, 0)
+	san = append(san, host)
+	//sanappend(san, "figma.com")
 	interCsr := &x509.Certificate{
 		Version:      3,
 		SerialNumber: big.NewInt(time.Now().Unix()),
@@ -72,15 +79,17 @@ func GenerateCaCertificate(rootCrt *tls.Certificate, host string) (*tls.Certific
 			OrganizationalUnit: []string{"CiProxyHttpsSniff"},
 			CommonName:         host,
 		},
+		DNSNames:              san,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0),
 		BasicConstraintsValid: true,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment | x509.KeyUsageKeyEncipherment,
-		EmailAddresses:        []string{"qingqianludao@gmail.com"},
+		//EmailAddresses:        []string{"cilanguser@gmail.com"},
 	}
 	interKey := generateEccPrivateKey()
-	interDer, err := x509.CreateCertificate(rand.Reader, interCsr, interCsr, interKey.Public(), rootCrt.PrivateKey)
+	rootCrtX509 := tlsCertToX509Cert(rootCrt)
+	interDer, err := x509.CreateCertificate(rand.Reader, interCsr, rootCrtX509, interKey.Public(), rootCrt.PrivateKey)
 	if err != nil {
 		panic(err)
 	}
@@ -90,11 +99,22 @@ func GenerateCaCertificate(rootCrt *tls.Certificate, host string) (*tls.Certific
 	}
 	caCertificate := tls.Certificate{
 		Certificate: [][]byte{interDer},
-		PrivateKey:  rootCrt.PrivateKey,
+		PrivateKey:  interKey,
 		Leaf:        interCertX509,
 	}
 
 	return &caCertificate, err
+}
+
+// tlsCertToX509Cert tls转换x509类型
+func tlsCertToX509Cert(rootCrt *tls.Certificate) *x509.Certificate {
+	certData := rootCrt.Certificate[0]
+	x509Cert, err := x509.ParseCertificate(certData)
+	if err != nil {
+		panic(err)
+		return nil
+	}
+	return x509Cert
 }
 
 // generateEccPrivateKey 生成 ECC 私钥
@@ -128,6 +148,7 @@ func saveCert(cert *x509.Certificate, fileName string) {
 	}
 }
 
+// GenerateTlsConfig 生成tls配置
 func GenerateTlsConfig(host string) (*tls.Config, error) {
 	cert, err := LoadCertificateTls("./cert/root.crt", "./cert/private.pem")
 	if err != nil {
@@ -137,15 +158,22 @@ func GenerateTlsConfig(host string) (*tls.Config, error) {
 	}
 
 	caCertificate, err := GenerateCaCertificate(cert, host)
-	//if err != nil {
-	//	errLog("load ca certificate failed", err)
-	//	panic(err)
-	//	return
-	//}
+	if err != nil {
+		//errLog("load ca certificate failed", err)
+		panic(err)
+		//return
+	}
+	rootCaX509, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		panic(err)
+	}
+	rootCaPool := x509.NewCertPool()
+	rootCaPool.AddCert(rootCaX509)
 	conf := &tls.Config{
 		Certificates: []tls.Certificate{*caCertificate},
 		//InsecureSkipVerify: true,
-		MaxVersion: tls.VersionTLS12,
+		MaxVersion: tls.VersionTLS13,
+		//RootCAs: rootCaPool,
 	}
 	return conf, err
 }
@@ -168,7 +196,7 @@ func savePrivateKey(key *ecdsa.PrivateKey, fileName string) {
 
 }
 
-// GenerateCert 生成根证书，中级证书， 终端证书
+// GenerateCert 生成根证书
 func GenerateCert(fileType string, organization string, country string, province string, locality string, organizationalUnit string, commonName string, dnsDomain string) {
 
 	filePath := "./cert/" + organization + "/"
@@ -211,66 +239,4 @@ func GenerateCert(fileType string, organization string, country string, province
 	}
 	saveCert(rootCert, filePath+"root.crt")
 	savePrivateKey(rootKey, filePath+"root.key")
-	//// 根证书签证中级证书
-	//interCsr := &x509.Certificate{
-	//	Version:      3,
-	//	SerialNumber: big.NewInt(time.Now().Unix()),
-	//	Subject: pkix.Name{
-	//		Country:            []string{country},
-	//		Province:           []string{province},
-	//		Locality:           []string{locality},
-	//		Organization:       []string{organization},
-	//		OrganizationalUnit: []string{organizationalUnit},
-	//		CommonName:         commonName,
-	//	},
-	//	NotBefore:             time.Now(),
-	//	NotAfter:              time.Now().AddDate(1, 0, 0),
-	//	BasicConstraintsValid: true,
-	//	IsCA:                  true,
-	//	MaxPathLen:            0,
-	//	MaxPathLenZero:        true,
-	//	KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-	//}
-	//interKey := generatePrivateKey()
-	//interDer, err := x509.CreateCertificate(rand.Reader, interCsr, rootCert, interKey.Public(), rootKey)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//interCert, err := x509.ParseCertificate(interDer)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//saveCert(interCert, filePath+"inter.crt")
-	//savePrivateKey(interKey, filePath+"inter.key")
-	//// 中级证书签证终端证书
-	//csr := &x509.Certificate{
-	//	Version:      3,
-	//	SerialNumber: big.NewInt(time.Now().Unix()),
-	//	Subject: pkix.Name{
-	//		Country:            []string{country},
-	//		Province:           []string{province},
-	//		Locality:           []string{locality},
-	//		Organization:       []string{organization},
-	//		OrganizationalUnit: []string{organizationalUnit},
-	//		CommonName:         commonName,
-	//	},
-	//	DNSNames:              []string{dnsDomain},
-	//	NotBefore:             time.Now(),
-	//	NotAfter:              time.Now().AddDate(1, 0, 0),
-	//	BasicConstraintsValid: true,
-	//	IsCA:                  false,
-	//	KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
-	//	ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-	//}
-	//key := generatePrivateKey()
-	//der, err := x509.CreateCertificate(rand.Reader, csr, interCert, key.Public(), interKey)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//cert, err := x509.ParseCertificate(der)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//saveCert(cert, filePath+"server.crt")
-	//savePrivateKey(key, filePath+"server.key")
 }
