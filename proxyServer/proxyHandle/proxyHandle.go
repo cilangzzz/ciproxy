@@ -8,6 +8,7 @@
   @desc: //TODO
 **/
 
+// Package proxyHandle 代理响应处理头
 package proxyHandle
 
 import (
@@ -97,6 +98,7 @@ func HttpsSniffProxyHandle(c net.Conn) {
 	if err != nil {
 		return
 	}
+
 	go proxyTransfer(tlsC, tlsS)
 	//if err != nil {
 	//	//errLog("http encode failed", err)

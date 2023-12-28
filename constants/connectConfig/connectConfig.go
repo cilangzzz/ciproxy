@@ -8,6 +8,7 @@
   @desc: //TODO
 **/
 
+// Package connectConfig Connect Config Constant
 package connectConfig
 
 import "time"

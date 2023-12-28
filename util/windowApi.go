@@ -1,3 +1,6 @@
+//go:build windows
+
+// 只对window编译
 /**
   @author: cilang
   @qq: 1019383856
@@ -53,6 +56,8 @@ type InternetPerConnOptionList struct {
 	pOptions      uintptr
 }
 
+// SetProxy 设置Window代理
+// https://blog.csdn.net/leoforbest/article/details/120166881
 func SetProxy(proxy string) error {
 	winInet, err := syscall.LoadLibrary("Wininet.dll")
 	if err != nil {
