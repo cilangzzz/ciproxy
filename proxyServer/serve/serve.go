@@ -42,7 +42,7 @@ func (p *ProxyServe) init() {
 
 // Use 使用中间件
 func (p ProxyServe) Use(handle middleHandle.Handle) {
-	middleHandle.MdManage.Add(handle)
+	middleHandle.Add(handle)
 }
 
 // SetProxyHandle 设置自定义代理响应处理
@@ -91,6 +91,10 @@ func (p ProxyServe) HttpsSniffProxyListen() {
 
 // CustomProxyListen 自定义代理监听
 func (p ProxyServe) CustomProxyListen() {
+	if p.ProxyHandle == nil {
+		log.Println("mainServe: no custom proxyHandle")
+		return
+	}
 	serverHandle.CustomProxyServer(p.Host, p.ProxyHandle)
 }
 

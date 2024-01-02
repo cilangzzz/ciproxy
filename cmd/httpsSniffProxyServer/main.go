@@ -17,7 +17,6 @@ import (
 )
 
 func main() {
-
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
 	port := flag.String("port", "8888", "Server Port")
 	method := flag.String("method", proxyMethod.HttpsSniffProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")

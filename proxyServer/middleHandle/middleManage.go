@@ -27,10 +27,12 @@ type (
 
 // MiddleHandle 中间件处理 外部使用
 func MiddleHandle(c net.Conn, s net.Conn) {
-
+	for _, handle := range MdManage.HandleChain {
+		handle(c, s)
+	}
 }
 
 // Add 添加中间件
-func (m MiddleManage) Add(handle Handle) {
-	m.HandleChain = append(m.HandleChain, handle)
+func Add(handle Handle) {
+	MdManage.HandleChain = append(MdManage.HandleChain, handle)
 }

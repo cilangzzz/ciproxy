@@ -24,13 +24,13 @@ func Transfer(destination io.WriteCloser, source io.ReadCloser) {
 	defer func(destination io.WriteCloser) {
 		err := destination.Close()
 		if err != nil {
-			errLog("close io writer failed", err)
+			//errLog("close io writer failed", err)
 		}
 	}(destination)
 	defer func(source io.ReadCloser) {
 		err := source.Close()
 		if err != nil {
-			errLog("close io writer failed", err)
+			//errLog("close io writer failed", err)
 		}
 	}(source)
 	_, err := io.Copy(destination, source)
