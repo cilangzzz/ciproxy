@@ -170,9 +170,10 @@ func GenerateTlsConfig(host string) (*tls.Config, error) {
 	rootCaPool := x509.NewCertPool()
 	rootCaPool.AddCert(rootCaX509)
 	conf := &tls.Config{
-		Certificates: []tls.Certificate{*caCertificate},
-		//InsecureSkipVerify: true,
-		MaxVersion: tls.VersionTLS13,
+		Certificates:       []tls.Certificate{*caCertificate},
+		InsecureSkipVerify: true,
+		MaxVersion:         tls.VersionTLS13,
+
 		//RootCAs: rootCaPool,
 	}
 	return conf, err

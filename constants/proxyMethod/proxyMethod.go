@@ -8,12 +8,14 @@
   @desc: //TODO
 **/
 
+// Package proxyMethod constant proxyMethod
 package proxyMethod
 
 const (
 	HttpProxy       = "HttpProxy"
 	HttpsProxy      = "HttpsProxy"
 	HttpsSniffProxy = "HttpsSniffProxy"
+	CustomProxy     = "CustomProxy"
 	TcpNormalProxy  = "TcpNormal"
 	TcpTunnelProxy  = "TcpTunnel"
 	PortProxy       = "PortProxy"
