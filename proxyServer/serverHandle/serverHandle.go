@@ -72,3 +72,20 @@ func HttpsSniffProxyServer(host string) {
 		go proxyHandle.HttpsSniffProxyHandle(c)
 	}
 }
+
+// CustomProxyServer 自定义监听
+func CustomProxyServer(host string, proxyHandle func(c net.Conn)) {
+	ln, err := net.Listen("tcp", host)
+	if err != nil {
+		errLog("listen serve launch failed ", err)
+		return
+	}
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
+			return
+		}
+		go proxyHandle(c)
+	}
+}

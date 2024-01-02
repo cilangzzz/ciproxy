@@ -19,6 +19,7 @@ import (
 	"github.com/opencvlzg/ciproxy/proxyServer/serverHandle"
 	"github.com/opencvlzg/ciproxy/util"
 	"log"
+	"net"
 )
 
 type ProxyServe struct {
@@ -26,8 +27,10 @@ type ProxyServe struct {
 	Port     string `json:"port,omitempty"`
 	Method   string `json:"method,omitempty"`
 	Protocol string `json:"protocol,omitempty"`
-	Host     string `json:"host,omitempty"`
 	LogPath  string `json:"logPath,omitempty"`
+	Host     string
+	// ProxyHandle use custom proxy need
+	ProxyHandle func(c net.Conn)
 }
 
 // init 初始化
@@ -35,6 +38,16 @@ func (p *ProxyServe) init() {
 	util.LogInit(p.LogPath)
 	p.Host = p.Ip + ":" + p.Port
 	p.printInfo()
+}
+
+// Use 使用中间件
+func (p ProxyServe) Use(handle middleHandle.Handle) {
+	middleHandle.MdManage.Add(handle)
+}
+
+// SetProxyHandle 设置自定义代理响应处理
+func (p *ProxyServe) SetProxyHandle(proxyHandle func(c net.Conn)) {
+	p.ProxyHandle = proxyHandle
 }
 
 // Start 服务启动主入口
@@ -49,14 +62,11 @@ func (p *ProxyServe) Start() {
 		p.HttpsSniffProxyListen()
 	case proxyMethod.TcpTunnelProxy:
 		p.TcpTunnelTlsProxyListen()
+	case proxyMethod.CustomProxy:
+		p.CustomProxyListen()
 	default:
 		log.Println("mainServe: No proxy method had been chose")
 	}
-}
-
-// Use 使用中间件
-func (p ProxyServe) Use(handle middleHandle.Handle) {
-	middleHandle.MdManage.Add(handle)
 }
 
 // HttpProxyListen Http代理监听
@@ -79,6 +89,11 @@ func (p ProxyServe) HttpsSniffProxyListen() {
 	serverHandle.HttpsSniffProxyServer(p.Host)
 }
 
+// CustomProxyListen 自定义代理监听
+func (p ProxyServe) CustomProxyListen() {
+	serverHandle.CustomProxyServer(p.Host, p.ProxyHandle)
+}
+
 // printInfo 打印信息
 func (p ProxyServe) printInfo() {
 	// 3d logo
@@ -88,65 +103,4 @@ func (p ProxyServe) printInfo() {
 	fmt.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
 	log.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
 
-}
-func (p ProxyServe) ListenTunnelTls() {
-	//	tlsConfig := util.TLSUtil{Organization: "CiproxyOrganization"}
-	//	cert, err := tlsConfig.GenCertificate()
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	config := &tls.Config{Certificates: []tls.Certificate{cert}}
-	//	ln, err := tls.Listen("tcp", p.Ip+":"+p.Port, config)
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	for {
-	//		client, err := ln.Accept()
-	//
-	//		if err != nil {
-	//			log.Println(err)
-	//		}
-	//		go trafficHandle.HandleClientConnect(client)
-	//	}
-	//}
-	//func (p *ProxyServe) ListenNormalHttps() {
-	//	ln, err := net.Listen("tcp", p.Ip+":"+p.Port)
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//
-	//	for {
-	//		client, err := ln.Accept()
-	//		if err != nil {
-	//			log.Println(err)
-	//		}
-	//		go trafficHandle.HandleClientConnect(client)
-	//	}
-}
-
-func (p ProxyServe) ListenHttpsListen() {
-	//tlsConfig := util.TLSUtil{Organization: "CiproxyOrganization"}
-	//cert, err := tlsConfig.GenCertificate()
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//config := &tls.Config{Certificates: []tls.Certificate{cert}, InsecureSkipVerify: true}
-	//ln, err := tls.Listen("tcp", p.Ip+":"+p.Port, config)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//for {
-	//	client, err := ln.Accept()
-	//	go httpHandle2.HandleClientConnect(client)
-	//	if err != nil {
-	//		log.Println(err)
-	//	}
-	//}
-}
-
-func (p ProxyServe) HttpsSniffProxyServe() {
-	//tlsClientConn := tls.Server()
-	//defer func() {
-	//	_ = tlsClientConn.Close()
-	//}()
 }
