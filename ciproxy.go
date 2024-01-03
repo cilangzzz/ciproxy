@@ -14,7 +14,7 @@ import (
 	"github.com/opencvlzg/ciproxy/proxyServer/serve"
 )
 
-// NewServe 返回服务实例
-func NewServe() *serve.ProxyServe {
+// NewProxyServe 返回服务实例
+func NewProxyServe() *serve.ProxyServe {
 	return &serve.ProxyServe{}
 }
