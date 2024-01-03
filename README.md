@@ -8,32 +8,17 @@
 
 ###### <center>Introduce</center>
 
-###### 							中文文档请看README.cn.md
-
 <center>use tcp implement, not http server, base on golang</center>
 </div>
 
-###### install
+## Install(安装)
 
 ```makefile
-#makefile for server
+go get github.com/opencvlzg/ciproxy
 
-apt install go
-
-git clone https://github.com/OpencvLZG/CiProxy
-
-#for server
-cd CiProxy/server 
-
-go build main.go
-
-#for client
-cd CiProxy/client
-
-go build main.go
 ```
 
-###### running
+## httpProxy
 
 ```makefile
 #for server
