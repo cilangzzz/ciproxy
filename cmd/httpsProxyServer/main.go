@@ -18,7 +18,6 @@ import (
 )
 
 func main() {
-
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
 	port := flag.String("port", "6677", "Server Port")
 	method := flag.String("method", proxyMethod.HttpsProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
@@ -32,8 +31,7 @@ func main() {
 		Protocol: *protocol,
 		LogPath:  *logPath,
 	}
-	middleware := middleHandle.MdManage
-	middleware.Add(func(client net.Conn, target net.Conn) {
+	middleHandle.Add(func(client net.Conn, target net.Conn) {
 		// Todo Some regular u want implement
 	})
 	proxyServe.Start()

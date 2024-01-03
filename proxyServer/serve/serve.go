@@ -81,7 +81,7 @@ func (p ProxyServe) HttpsProxyListen() {
 
 // TcpTunnelTlsProxyListen Tcp隧道加密代理监听
 func (p ProxyServe) TcpTunnelTlsProxyListen() {
-
+	serverHandle.TunnelProxyServer(p.Host)
 }
 
 // HttpsSniffProxyListen Https代理欺骗监听
@@ -96,6 +96,10 @@ func (p ProxyServe) CustomProxyListen() {
 		return
 	}
 	serverHandle.CustomProxyServer(p.Host, p.ProxyHandle)
+}
+
+func (p ProxyServe) WebsocketProxyListen() {
+	// Todo - no implement
 }
 
 // printInfo 打印信息
