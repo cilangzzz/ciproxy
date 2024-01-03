@@ -122,6 +122,34 @@ func HttpsSniffProxyHandle(c net.Conn) {
 
 }
 
+// TunnelProxyHandle 加密代理
+func TunnelProxyHandle(c net.Conn) {
+	buf := bufio.NewReader(c)
+	request, err := http.ReadRequest(buf)
+	if err != nil {
+		return
+	}
+	if !strings.HasSuffix(request.Host, ":443") {
+		request.Host += ":443"
+	}
+	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	if err != nil {
+		errLog("remote host connect failed"+request.Host, err)
+		return
+	}
+	switch request.Method {
+	case "CONNECT":
+		_, err := c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+		if err != nil {
+			errLog("write hello failed"+request.Host+request.Method, err)
+			return
+		}
+	default:
+
+	}
+	proxyTransfer(c, s)
+}
+
 // TestProxyHandle 测试代理头
 //
 //	func TestProxyHandle(c net.Conn) {

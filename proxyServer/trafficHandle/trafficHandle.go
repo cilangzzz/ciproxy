@@ -19,6 +19,21 @@ func errLog(msg string, err error) {
 	log.Println("proxyHandle:" + msg + " err:" + err.Error())
 }
 
+// cryptTraffic 流量加密
+func cryptTraffic() {
+
+}
+
+// decryptTraffic 流量解密
+func decryptTraffic() {
+
+}
+
+// TunnelTransfer 加密流量转发
+func TunnelTransfer() {
+
+}
+
 // Transfer traffic transfer 流量Io转发
 func Transfer(destination io.WriteCloser, source io.ReadCloser) {
 	defer func(destination io.WriteCloser) {
