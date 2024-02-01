@@ -24,5 +24,6 @@
 /.vs
 /test
 *.log
+data.txt
 go.work
 

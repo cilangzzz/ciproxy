@@ -2,7 +2,7 @@
 
 <div align=center></br></br></br>
 
-<center> <img src="https://thirdqq.qlogo.cn/g?b=sdk&k=iaNcdgTAPWOS0JJseiafW1Dw&kti=ZIsqGgAAAAI&s=40&t=1638804590" style="zoom:300%;" /></center>
+<center> <img src="http://www.cilang.buzz/static/file/logo.jpg" style="zoom:10%;" /></center>
 
 #  <center>  CiProxy </center>
 

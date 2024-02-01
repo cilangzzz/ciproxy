@@ -11,6 +11,7 @@
 package trafficHandle
 
 import (
+	. "github.com/opencvlzg/ciproxy"
 	"io"
 	"log"
 )
@@ -49,6 +50,28 @@ func Transfer(destination io.WriteCloser, source io.ReadCloser) {
 		}
 	}(source)
 	_, err := io.Copy(destination, source)
+	if err != nil {
+		errLog("copy data transfer failed", err)
+	}
+}
+
+// TeeTransfer traffic transfer 流量Io转发
+func TeeTransfer(destination io.WriteCloser, source io.ReadCloser) {
+	defer func(destination io.WriteCloser) {
+		err := destination.Close()
+		if err != nil {
+			//errLog("close io writer failed", err)
+		}
+	}(destination)
+	defer func(source io.ReadCloser) {
+		err := source.Close()
+		if err != nil {
+			//errLog("close io writer failed", err)
+		}
+	}(source)
+	teeReader := io.TeeReader(source, DefaultWriter)
+	//http.Read
+	_, err := io.Copy(destination, teeReader)
 	if err != nil {
 		errLog("copy data transfer failed", err)
 	}

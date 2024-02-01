@@ -8,13 +8,18 @@
   @desc: //TODO
 **/
 
+// Package ciproxy a proxy frame implement by tcp,udp
 package ciproxy
 
 import (
-	"github.com/opencvlzg/ciproxy/proxyServer/serve"
+	"io"
+	"os"
 )
 
-// NewProxyServe 返回服务实例
-func NewProxyServe() *serve.ProxyServe {
-	return &serve.ProxyServe{}
-}
+// DefaultWriter reference gin
+var DefaultWriter io.Writer = os.Stdout
+
+//// NewProxyServe 返回服务实例
+//func NewProxyServe() *serve.ProxyServe {
+//	return &serve.ProxyServe{}
+//}
