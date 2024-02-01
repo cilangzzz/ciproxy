@@ -11,10 +11,34 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"flag"
+	"github.com/opencvlzg/ciproxy"
 	"github.com/opencvlzg/ciproxy/constants/proxyMethod"
 	"github.com/opencvlzg/ciproxy/proxyServer/serve"
+	"io"
+	"net/http"
+	"os"
 )
+
+var buffer = bytes.NewBuffer([]byte{})
+var writer = io.MultiWriter(buffer)
+var buf = bufio.NewReader(buffer)
+
+func logger() {
+
+	for {
+		request, err := http.ReadRequest(buf)
+		if err != nil {
+			//return
+		} else {
+			println(request.Method, request.Host, buf.Size())
+
+		}
+
+	}
+}
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
@@ -30,6 +54,14 @@ func main() {
 		Protocol: *protocol,
 		LogPath:  *logPath,
 	}
+	file, err := os.Create("data.txt")
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	ciproxy.DefaultWriter = bufio.NewWriter(file)
+	ciproxy.DefaultWriter = writer
+	//go logger()
 	//middleware := middleHandle.MdManage
 	//middleware.Add(func(client net.Conn, target net.Conn) {
 	//	// Todo Some regular u want implement

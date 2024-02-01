@@ -14,6 +14,7 @@ package proxyHandle
 import (
 	"bufio"
 	"crypto/tls"
+	"github.com/opencvlzg/ciproxy"
 	"github.com/opencvlzg/ciproxy/constants/connectConfig"
 	"github.com/opencvlzg/ciproxy/proxyServer/trafficHandle"
 	"github.com/opencvlzg/ciproxy/util"
@@ -22,6 +23,8 @@ import (
 	"net/http"
 	"strings"
 )
+
+var ProxyHandle func(ctx ciproxy.Context)
 
 func errLog(msg string, err error) {
 	log.Println("proxyHandle:" + msg + " err:" + err.Error())
@@ -32,6 +35,13 @@ func proxyTransfer(c net.Conn, s net.Conn) {
 	//go middleHandle.MiddleHandle(c, s)
 	go trafficHandle.Transfer(c, s)
 	go trafficHandle.Transfer(s, c)
+}
+
+// 转发流量 同时输出 内部使用
+func proxyLogTransfer(c net.Conn, s net.Conn) {
+	//go middleHandle.MiddleHandle(c, s)
+	go trafficHandle.TeeTransfer(c, s)
+	go trafficHandle.TeeTransfer(s, c)
 }
 
 // HttpProxyHandle Http处理
@@ -105,8 +115,8 @@ func HttpsSniffProxyHandle(c net.Conn) {
 	tlsC, err := upgradeTls(c, tlsCnf)
 	if err != nil {
 		errLog("upgrade tls failed", err)
-		closeConn(tlsC)
-		closeConn(tlsS)
+		//closeConn(tlsC)
+		//closeConn(tlsS)
 		return
 	}
 	//_, err = c.Write(util.HttpContext("元神"))
@@ -118,7 +128,8 @@ func HttpsSniffProxyHandle(c net.Conn) {
 	//	fmt.Printf("%s", err)
 	//}
 	//fmt.Printf("%s\n", tlsS.RemoteAddr())
-	proxyTransfer(tlsC, tlsS)
+	//proxyTransfer(tlsC, tlsS)
+	proxyLogTransfer(tlsC, tlsS)
 
 }
 
