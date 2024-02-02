@@ -22,6 +22,9 @@ import (
 	"net"
 )
 
+type ProxyHandle interface {
+}
+
 type ProxyServe struct {
 	Ip       string `json:"ip,omitempty"`
 	Port     string `json:"port,omitempty"`

@@ -59,3 +59,17 @@ func (c *Context) SetServerConn(ServerConn *net.Conn) {
 func (c *Context) SetResponse() {
 
 }
+
+// Next set to next handle
+func (c *Context) Next() {
+	c.index++
+	s := len(c.handlers)
+	for ; c.index < s; c.index++ {
+		c.handlers[c.index](c)
+	}
+}
+
+// reset reset the context
+func (c *Context) reset() {
+
+}
