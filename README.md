@@ -1,18 +1,21 @@
 
 
 <div align=center></br></br></br>
-<center> <img src="http://www.cilang.buzz/static/file/logo.jpg"  width="300" height="300" /></center>
+<center> <img src="http://www.cilang.buzz/static/file/logo.jpg" zoom="100%"  width="300" height="300" /></center>
 
 #  <center>  CiProxy </center>
 
 ###### <center>Introduce</center>
 
 <center>use tcp implement, not http server, base on golang</center>
-![golang](https://img.shields.io/badge/golang-blue?logo=go) ![request](https://img.shields.io/badge/proxy-blue?logo=proxy)  ![open sourse (shields.io)](https://img.shields.io/badge/open%20sourse-darkgreen?logo=opensourceinitiative)   ![github (shields.io)](https://img.shields.io/badge/github-grey?logo=github) ![gitee (shields.io)](https://img.shields.io/badge/gitee-orange?logo=gitee) ![git (shields.io)](https://img.shields.io/badge/git-lightblue?logo=git) ![Mit: license (shields.io)](https://img.shields.io/badge/Mit-license-blue?logo=bookstack) ![img](https://komarev.com/ghpvc/?username=cilproxy&&style=flat-square)
+
 </div>
 
-## Install(安装)
 
+![golang](https://img.shields.io/badge/golang-blue?logo=go) ![request](https://img.shields.io/badge/proxy-blue?logo=proxy)  ![open sourse (shields.io)](https://img.shields.io/badge/open%20sourse-darkgreen?logo=opensourceinitiative)   ![github (shields.io)](https://img.shields.io/badge/github-grey?logo=github) ![gitee (shields.io)](https://img.shields.io/badge/gitee-orange?logo=gitee) ![git (shields.io)](https://img.shields.io/badge/git-lightblue?logo=git) ![Mit: license (shields.io)](https://img.shields.io/badge/Mit-license-blue?logo=bookstack) ![img](https://komarev.com/ghpvc/?username=cilproxy&&style=flat-square)
+
+
+## Install(安装)
 ```makefile
 go get github.com/opencvlzg/ciproxy
 ```
