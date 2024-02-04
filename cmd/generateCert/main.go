@@ -12,7 +12,7 @@ package main
 
 import (
 	"flag"
-	"github.com/opencvlzg/ciproxy/util"
+	"github.com/opencvlzg/ciproxy/internal/util"
 )
 
 func main() {

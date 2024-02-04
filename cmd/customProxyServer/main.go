@@ -13,30 +13,26 @@ package main
 import (
 	"bufio"
 	"flag"
-	"github.com/opencvlzg/ciproxy/constants/connectConfig"
-	"github.com/opencvlzg/ciproxy/constants/proxyMethod"
-	"github.com/opencvlzg/ciproxy/proxyServer/middleHandle"
-	"github.com/opencvlzg/ciproxy/proxyServer/serve"
-	"github.com/opencvlzg/ciproxy/proxyServer/trafficHandle"
+	"github.com/opencvlzg/ciproxy"
 	"net"
 	"net/http"
 	"strings"
 )
 
 func proxyTransfer(c net.Conn, s net.Conn) {
-	go middleHandle.MiddleHandle(c, s)
-	go trafficHandle.Transfer(c, s)
-	go trafficHandle.Transfer(s, c)
+	//go MiddleHandle(c, s)
+	go ciproxy.Transfer(c, s)
+	go ciproxy.Transfer(s, c)
 }
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
 	port := flag.String("port", "8888", "Server Port")
-	method := flag.String("method", proxyMethod.CustomProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
+	method := flag.String("method", ciproxy.CustomProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
 	protocol := flag.String("protocol", "TCP", "Connect Protocol")
 	logPath := flag.String("log", "log/proxy.log", "log file path")
 	flag.Parse()
-	proxyServe := serve.ProxyServe{
+	proxyServe := ciproxy.ProxyServe{
 		Ip:       *ip,
 		Port:     *port,
 		Method:   *method,
@@ -46,8 +42,8 @@ func main() {
 	//customProxyHandle := func(c net.Conn) {
 	//	proxyHandle.HttpsProxyHandle(c)
 	//}
-	customProxyHandle := func(c net.Conn) {
-		buf := bufio.NewReader(c)
+	customProxyHandle := func(c *ciproxy.Context) {
+		buf := bufio.NewReader(c.ClientConn)
 		request, err := http.ReadRequest(buf)
 		if err != nil {
 			return
@@ -55,25 +51,21 @@ func main() {
 		if !strings.HasSuffix(request.Host, ":443") {
 			request.Host += ":443"
 		}
-		s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+		s, err := net.DialTimeout("tcp", request.Host, ciproxy.DefaultOutTime)
 		if err != nil {
 			return
 		}
 		switch request.Method {
 		case "CONNECT":
-			_, err := c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+			_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 			if err != nil {
 				return
 			}
 		default:
 
 		}
-		proxyTransfer(c, s)
+		proxyTransfer(c.ClientConn, s)
 	}
 	proxyServe.SetProxyHandle(customProxyHandle)
-	middleHandle.Add(func(client net.Conn, target net.Conn) {
-		// Todo Some regular u want implement
-		println(client.RemoteAddr().String())
-	})
 	proxyServe.Start()
 }

@@ -19,7 +19,20 @@ import (
 // DefaultWriter reference gin
 var DefaultWriter io.Writer = os.Stdout
 
-//// NewProxyServe 返回服务实例
-//func NewProxyServe() *serve.ProxyServe {
-//	return &serve.ProxyServe{}
-//}
+// NewProxyServe 返回服务实例
+func NewProxyServe() *ProxyServe {
+	return &ProxyServe{}
+}
+
+// Default 返回默认服务实例
+func Default() *ProxyServe {
+	return &ProxyServe{
+		Ip:          DefaultIp,
+		Port:        DefaultPort,
+		Method:      DefaultProxy,
+		Protocol:    DefaultConnectProtocol,
+		LogPath:     "",
+		Host:        "",
+		ProxyHandle: nil,
+	}
+}

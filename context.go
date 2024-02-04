@@ -25,7 +25,7 @@ type ProxyHandlersChain []ProxyHandle
 // Context reference from go-proxy and gin
 type Context struct {
 	// ClientConn client net conn
-	ClientConn *net.Conn
+	ClientConn net.Conn
 
 	Request *http.Request
 
@@ -41,7 +41,7 @@ type Context struct {
 }
 
 // SetClientConn set client conn
-func (c *Context) SetClientConn(ClientConn *net.Conn) {
+func (c *Context) SetClientConn(ClientConn net.Conn) {
 	c.ClientConn = ClientConn
 }
 

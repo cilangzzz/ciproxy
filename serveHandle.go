@@ -12,7 +12,6 @@ package ciproxy
 
 import (
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/proxyServer/proxyHandle"
 	"log"
 	"net"
 )
@@ -51,7 +50,7 @@ func HttpProxyServer(host string) {
 			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
 			return
 		}
-		go proxyHandle.HttpProxyHandle(c)
+		go HttpProxyHandle(c)
 	}
 
 }
@@ -69,7 +68,7 @@ func HttpsProxyServer(host string) {
 			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
 			return
 		}
-		go proxyHandle.HttpsProxyHandle(c)
+		go HttpsProxyHandle(c)
 	}
 }
 
@@ -86,12 +85,12 @@ func HttpsSniffProxyServer(host string) {
 			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
 			return
 		}
-		go proxyHandle.HttpsSniffProxyHandle(c)
+		go HttpsSniffProxyHandle(c)
 	}
 }
 
 // CustomProxyServer 自定义监听
-func CustomProxyServer(host string, proxyHandle func(c net.Conn)) {
+func CustomProxyServer(host string, proxyHandle func(c *Context)) {
 	ln, err := net.Listen("tcp", host)
 	if err != nil {
 		errLog("listen serve launch failed ", err)
@@ -99,11 +98,12 @@ func CustomProxyServer(host string, proxyHandle func(c net.Conn)) {
 	}
 	for {
 		c, err := ln.Accept()
+
 		if err != nil {
 			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
 			return
 		}
-		go proxyHandle(c)
+		//go proxyHandle(c)
 	}
 }
 
@@ -121,6 +121,6 @@ func TunnelProxyServer(host string) {
 			errLog("connect client failed"+tlsC.RemoteAddr().String()+"err", err)
 			return
 		}
-		go proxyHandle.TunnelProxyHandle(tlsC)
+		go TunnelProxyHandle(tlsC)
 	}
 }

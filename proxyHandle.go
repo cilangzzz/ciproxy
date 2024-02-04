@@ -14,9 +14,7 @@ package ciproxy
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/constants/connectConfig"
-	"github.com/opencvlzg/ciproxy/proxyServer/trafficHandle"
-	"github.com/opencvlzg/ciproxy/util"
+	"github.com/opencvlzg/ciproxy/internal/util"
 	"net"
 	"net/http"
 	"strings"
@@ -25,15 +23,15 @@ import (
 // 转发流量 内部使用
 func proxyTransfer(c net.Conn, s net.Conn) {
 	//go middleHandle.MiddleHandle(c, s)
-	go trafficHandle.Transfer(c, s)
-	go trafficHandle.Transfer(s, c)
+	go Transfer(c, s)
+	go Transfer(s, c)
 }
 
 // 转发流量 同时输出 内部使用
 func proxyLogTransfer(c net.Conn, s net.Conn) {
 	//go middleHandle.MiddleHandle(c, s)
-	go trafficHandle.TeeTransfer(c, s)
-	go trafficHandle.TeeTransfer(s, c)
+	go TeeTransfer(c, s)
+	go TeeTransfer(s, c)
 }
 
 // HttpProxyHandle Http处理
@@ -43,7 +41,7 @@ func HttpProxyHandle(c net.Conn) {
 	if err != nil {
 		return
 	}
-	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
@@ -61,7 +59,7 @@ func HttpsProxyHandle(c net.Conn) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
@@ -135,7 +133,7 @@ func TunnelProxyHandle(c net.Conn) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
