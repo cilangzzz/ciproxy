@@ -35,18 +35,19 @@ func proxyLogTransfer(c net.Conn, s net.Conn) {
 }
 
 // HttpProxyHandle Http处理
-func HttpProxyHandle(c net.Conn) {
-	buf := bufio.NewReader(c)
+func HttpProxyHandle(c *Context) {
+
+	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
 		return
 	}
-	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
+	c.ServerConn, err = net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
 	}
-	proxyTransfer(c, s)
+	proxyTransfer(c.ClientConn, c.ServerConn)
 }
 
 // HttpsProxyHandle Https处理

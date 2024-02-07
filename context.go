@@ -36,7 +36,7 @@ type Context struct {
 	mu sync.RWMutex
 
 	// ServerConn server net conn
-	ServerConn *net.Conn
+	ServerConn net.Conn
 	Response   http.Response
 }
 
@@ -51,7 +51,7 @@ func (c *Context) SetRequest() {
 }
 
 // SetServerConn set the server conn
-func (c *Context) SetServerConn(ServerConn *net.Conn) {
+func (c *Context) SetServerConn(ServerConn net.Conn) {
 	c.ServerConn = ServerConn
 }
 
@@ -71,5 +71,10 @@ func (c *Context) Next() {
 
 // reset reset the context
 func (c *Context) reset() {
+	c.ClientConn = nil
+	c.Request = nil
+	c.handlers = nil
+	c.ServerConn = nil
+	c.Response = http.Response{}
 
 }

@@ -25,9 +25,9 @@ type ProxyServe struct {
 	LogPath  string `json:"logPath,omitempty"`
 	Host     string
 	// pool contextPool
-	pool sync.Pool
+	contextPool sync.Pool
 	// ProxyHandle use custom proxy need
-	ProxyHandle func(ctx *Context)
+	ProxyHandlersChain ProxyHandlersChain
 }
 
 // init 初始化
@@ -35,14 +35,25 @@ func (p *ProxyServe) init() {
 	logInit(p.LogPath)
 	p.Host = p.Ip + ":" + p.Port
 	p.printInfo()
+	// sync.pool
+	p.contextPool.New = func() any {
+		return p.newContext()
+	}
 }
 
-// SetProxyHandle 设置自定义代理响应处理
-func (p *ProxyServe) SetProxyHandle(proxyHandle ProxyHandle) {
-	p.ProxyHandle = proxyHandle
+// newContext create new context
+func (p *ProxyServe) newContext() *Context {
+	return &Context{handlers: p.ProxyHandlersChain}
+}
+
+// AddHandle 设置自定义代理响应处理
+// set the custom proxyHandle if u choose the customMethod
+func (p *ProxyServe) AddHandle(proxyHandle ProxyHandle) {
+	p.ProxyHandlersChain = append(p.ProxyHandlersChain, proxyHandle)
 }
 
 // Start 服务启动主入口
+// running the server
 func (p *ProxyServe) Start() {
 	// init struct filed
 	p.init()
@@ -50,7 +61,7 @@ func (p *ProxyServe) Start() {
 	//c.reset()
 	switch p.Method {
 	case HttpProxy:
-		p.HttpProxyListen()
+		p.AddHandle(HttpProxyHandle)
 	case HttpsProxy:
 		p.HttpsProxyListen()
 	case HttpsSniffProxy:
@@ -59,46 +70,61 @@ func (p *ProxyServe) Start() {
 		p.TcpTunnelTlsProxyListen()
 	case CustomProxy:
 		p.CustomProxyListen()
+	case DefaultProxy:
+		println("no implement")
 	default:
 		log.Println("mainServe: No proxy method had been chose")
 	}
+	p.ServerHandleListen()
+}
+
+// ServerHandleListen ServerHandle 服务代理处理
+func (p *ProxyServe) ServerHandleListen() {
+	if p.ProxyHandlersChain == nil {
+		println("mainServe: no custom proxyHandle implement")
+		return
+	}
+
+	CustomProxyServer(p)
 }
 
 // HttpProxyListen Http代理监听
-func (p ProxyServe) HttpProxyListen() {
+// listen the http proxy
+// only forward http
+func (p *ProxyServe) HttpProxyListen() {
 	HttpProxyServer(p.Host)
 }
 
 // HttpsProxyListen Https代理监听
-func (p ProxyServe) HttpsProxyListen() {
+func (p *ProxyServe) HttpsProxyListen() {
 	HttpsProxyServer(p.Host)
 }
 
 // TcpTunnelTlsProxyListen Tcp隧道加密代理监听
-func (p ProxyServe) TcpTunnelTlsProxyListen() {
+func (p *ProxyServe) TcpTunnelTlsProxyListen() {
 	TunnelProxyServer(p.Host)
 }
 
 // HttpsSniffProxyListen Https代理欺骗监听
-func (p ProxyServe) HttpsSniffProxyListen() {
+func (p *ProxyServe) HttpsSniffProxyListen() {
 	HttpsSniffProxyServer(p.Host)
 }
 
 // CustomProxyListen 自定义代理监听
-func (p ProxyServe) CustomProxyListen() {
-	if p.ProxyHandle == nil {
-		log.Println("mainServe: no custom proxyHandle")
-		return
-	}
-	CustomProxyServer(p.Host, p.ProxyHandle)
+func (p *ProxyServe) CustomProxyListen() {
+	//if p.ProxyHandle == nil {
+	//	log.Println("mainServe: no custom proxyHandle")
+	//	return
+	//}
+	//CustomProxyServer(p.Host, p.ProxyHandle)
 }
 
-func (p ProxyServe) WebsocketProxyListen() {
+func (p *ProxyServe) WebsocketProxyListen() {
 	// Todo - no implement
 }
 
 // printInfo 打印信息
-func (p ProxyServe) printInfo() {
+func (p *ProxyServe) printInfo() {
 	// 3d logo
 	println("/\\  _`\\    __/\\  _`\\                                \n\\ \\ \\/\\_\\ /\\_\\ \\ \\L\\ \\_ __   ___   __  _  __  __    \n \\ \\ \\/_/_\\/\\ \\ \\ ,__/\\`'__\\/ __`\\/\\ \\/'\\/\\ \\/\\ \\   \n  \\ \\ \\L\\ \\\\ \\ \\ \\ \\/\\ \\ \\//\\ \\L\\ \\/>  </\\ \\ \\_\\ \\  \n   \\ \\____/ \\ \\_\\ \\_\\ \\ \\_\\\\ \\____//\\_/\\_\\\\/`____ \\ \n    \\/___/   \\/_/\\/_/  \\/_/ \\/___/ \\//\\/_/ `/___/> \\\n                                              /\\___/\n                                              \\/__/ ")
 	fmt.Printf("CiProxy Version %s, Mode %s\n", ProxyVersion, ProxyMode)
