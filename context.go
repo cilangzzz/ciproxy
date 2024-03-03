@@ -24,8 +24,10 @@ type ProxyHandlersChain []ProxyHandle
 
 // Context reference from go-proxy and gin
 type Context struct {
+	// ConnStatus conn status connecting closed nil
+	ConnStatus string
 	// ClientConn client net conn
-	ClientConn *net.Conn
+	ClientConn net.Conn
 
 	Request *http.Request
 
@@ -36,12 +38,12 @@ type Context struct {
 	mu sync.RWMutex
 
 	// ServerConn server net conn
-	ServerConn *net.Conn
+	ServerConn net.Conn
 	Response   http.Response
 }
 
 // SetClientConn set client conn
-func (c *Context) SetClientConn(ClientConn *net.Conn) {
+func (c *Context) SetClientConn(ClientConn net.Conn) {
 	c.ClientConn = ClientConn
 }
 
@@ -51,7 +53,7 @@ func (c *Context) SetRequest() {
 }
 
 // SetServerConn set the server conn
-func (c *Context) SetServerConn(ServerConn *net.Conn) {
+func (c *Context) SetServerConn(ServerConn net.Conn) {
 	c.ServerConn = ServerConn
 }
 
@@ -60,9 +62,19 @@ func (c *Context) SetResponse() {
 
 }
 
+// IsAbort return abort label
+func (c *Context) IsAbort() bool {
+	return c.index == -1
+}
+
+// Abort set the abort index
+func (c *Context) Abort() {
+	c.index = -1
+}
+
 // Next set to next handle
 func (c *Context) Next() {
-	c.index++
+	//c.index++
 	s := len(c.handlers)
 	for ; c.index < s; c.index++ {
 		c.handlers[c.index](c)
@@ -71,5 +83,12 @@ func (c *Context) Next() {
 
 // reset reset the context
 func (c *Context) reset() {
+	c.index = 0
+	c.ConnStatus = "closed"
+	c.ClientConn = nil
+	c.Request = nil
+	//c.handlers = nil
+	c.ServerConn = nil
+	c.Response = http.Response{}
 
 }

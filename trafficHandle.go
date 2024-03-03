@@ -7,7 +7,7 @@
   @desc: //TODO
 **/
 
-// Package trafficHandle 流量转发
+// Package ciproxy 流量转发
 package ciproxy
 
 import (

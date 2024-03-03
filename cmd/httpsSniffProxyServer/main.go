@@ -15,11 +15,8 @@ import (
 	"bytes"
 	"flag"
 	"github.com/opencvlzg/ciproxy"
-	"github.com/opencvlzg/ciproxy/constants/proxyMethod"
-	"github.com/opencvlzg/ciproxy/proxyServer/serve"
 	"io"
 	"net/http"
-	"os"
 )
 
 var buffer = bytes.NewBuffer([]byte{})
@@ -33,7 +30,7 @@ func logger() {
 		if err != nil {
 			//return
 		} else {
-			println(request.Method, request.Host, buf.Size())
+			println("[CiProxy]logger middleware", request.Method, request.Host, buf.Size())
 
 		}
 
@@ -42,29 +39,23 @@ func logger() {
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
-	port := flag.String("port", "8888", "Server Port")
-	method := flag.String("method", proxyMethod.HttpsSniffProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
-	protocol := flag.String("protocol", "TCP", "Connect Protocol")
-	logPath := flag.String("log", "log/proxy.log", "log file path")
+	port := flag.String("port", "6677", "Server Port")
+	method := flag.String("method", ciproxy.HttpsSniffProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
+	//protocol := flag.String("protocol", "TCP", "Connect Protocol")
+	//logPath := flag.String("log", "log/proxy.log", "log file path")
 	flag.Parse()
-	proxyServe := serve.ProxyServe{
-		Ip:       *ip,
-		Port:     *port,
-		Method:   *method,
-		Protocol: *protocol,
-		LogPath:  *logPath,
-	}
-	file, err := os.Create("data.txt")
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	ciproxy.DefaultWriter = bufio.NewWriter(file)
+	//file, err := os.Create("data.txt")
+	//if err != nil {
+	//	return
+	//}
+	//defer file.Close()
+	//ciproxy.DefaultWriter = bufio.NewWriter(file)
 	ciproxy.DefaultWriter = writer
-	//go logger()
-	//middleware := middleHandle.MdManage
-	//middleware.Add(func(client net.Conn, target net.Conn) {
-	//	// Todo Some regular u want implement
-	//})
+
+	proxyServe := ciproxy.Default()
+	proxyServe.Ip = *ip
+	proxyServe.Port = *port
+	proxyServe.Method = *method
+	go logger()
 	proxyServe.Start()
 }

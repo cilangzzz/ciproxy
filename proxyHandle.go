@@ -14,9 +14,7 @@ package ciproxy
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/constants/connectConfig"
-	"github.com/opencvlzg/ciproxy/proxyServer/trafficHandle"
-	"github.com/opencvlzg/ciproxy/util"
+	"github.com/opencvlzg/ciproxy/internal/util"
 	"net"
 	"net/http"
 	"strings"
@@ -25,35 +23,36 @@ import (
 // 转发流量 内部使用
 func proxyTransfer(c net.Conn, s net.Conn) {
 	//go middleHandle.MiddleHandle(c, s)
-	go trafficHandle.Transfer(c, s)
-	go trafficHandle.Transfer(s, c)
+	go Transfer(c, s)
+	go Transfer(s, c)
 }
 
 // 转发流量 同时输出 内部使用
 func proxyLogTransfer(c net.Conn, s net.Conn) {
 	//go middleHandle.MiddleHandle(c, s)
-	go trafficHandle.TeeTransfer(c, s)
-	go trafficHandle.TeeTransfer(s, c)
+	go TeeTransfer(c, s)
+	go TeeTransfer(s, c)
 }
 
 // HttpProxyHandle Http处理
-func HttpProxyHandle(c net.Conn) {
-	buf := bufio.NewReader(c)
+func HttpProxyHandle(c *Context) {
+
+	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
 		return
 	}
-	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	c.ServerConn, err = net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
 	}
-	proxyTransfer(c, s)
+	proxyTransfer(c.ClientConn, c.ServerConn)
 }
 
 // HttpsProxyHandle Https处理
-func HttpsProxyHandle(c net.Conn) {
-	buf := bufio.NewReader(c)
+func HttpsProxyHandle(c *Context) {
+	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
 		return
@@ -61,14 +60,14 @@ func HttpsProxyHandle(c net.Conn) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
 	}
 	switch request.Method {
 	case "CONNECT":
-		_, err := c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+		_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 		if err != nil {
 			errLog("write hello failed"+request.Host+request.Method, err)
 			return
@@ -76,13 +75,13 @@ func HttpsProxyHandle(c net.Conn) {
 	default:
 
 	}
-	proxyTransfer(c, s)
+	proxyTransfer(c.ClientConn, s)
 
 }
 
 // HttpsSniffProxyHandle https中间人处理
-func HttpsSniffProxyHandle(c net.Conn) {
-	cReader := bufio.NewReader(c)
+func HttpsSniffProxyHandle(c *Context) {
+	cReader := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(cReader)
 	if err != nil {
 		return
@@ -99,12 +98,12 @@ func HttpsSniffProxyHandle(c net.Conn) {
 		errLog("remote host connect failed", err)
 		return
 	}
-	_, err = c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+	_, err = c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 	if err != nil {
 		errLog("write hello failed"+request.Host+request.Method, err)
 		return
 	}
-	tlsC, err := upgradeTls(c, tlsCnf)
+	tlsC, err := upgradeTls(c.ClientConn, tlsCnf)
 	if err != nil {
 		errLog("upgrade tls failed", err)
 		//closeConn(tlsC)
@@ -126,8 +125,8 @@ func HttpsSniffProxyHandle(c net.Conn) {
 }
 
 // TunnelProxyHandle 加密代理
-func TunnelProxyHandle(c net.Conn) {
-	buf := bufio.NewReader(c)
+func TunnelProxyHandle(c *Context) {
+	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
 		return
@@ -135,14 +134,14 @@ func TunnelProxyHandle(c net.Conn) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, connectConfig.DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
 		errLog("remote host connect failed"+request.Host, err)
 		return
 	}
 	switch request.Method {
 	case "CONNECT":
-		_, err := c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+		_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 		if err != nil {
 			errLog("write hello failed"+request.Host+request.Method, err)
 			return
@@ -150,7 +149,12 @@ func TunnelProxyHandle(c net.Conn) {
 	default:
 
 	}
-	proxyTransfer(c, s)
+	proxyTransfer(c.ClientConn, s)
+}
+
+// WebsocketProxyHandle websocket 代理
+func WebsocketProxyHandle(c *Context) {
+	panic("no implement")
 }
 
 // TestProxyHandle 测试代理头
