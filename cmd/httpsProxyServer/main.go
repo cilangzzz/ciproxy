@@ -11,28 +11,25 @@ package main
 
 import (
 	"flag"
-	"github.com/opencvlzg/ciproxy/constants/proxyMethod"
-	"github.com/opencvlzg/ciproxy/proxyServer/middleHandle"
-	"github.com/opencvlzg/ciproxy/proxyServer/serve"
-	"net"
+	"github.com/opencvlzg/ciproxy"
+	"log"
 )
+
+func logger(c *ciproxy.Context) {
+	log.Println("[CiProxy]logger middleware", c.ClientConn.LocalAddr(), c.ConnStatus)
+}
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
 	port := flag.String("port", "6677", "Server Port")
-	method := flag.String("method", proxyMethod.HttpsProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
-	protocol := flag.String("protocol", "TCP", "Connect Protocol")
-	logPath := flag.String("log", "log/proxy.log", "log file path")
+	method := flag.String("method", ciproxy.HttpsProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
+	//protocol := flag.String("protocol", "TCP", "Connect Protocol")
+	//logPath := flag.String("log", "log/proxy.log", "log file path")
 	flag.Parse()
-	proxyServe := serve.ProxyServe{
-		Ip:       *ip,
-		Port:     *port,
-		Method:   *method,
-		Protocol: *protocol,
-		LogPath:  *logPath,
-	}
-	middleHandle.Add(func(client net.Conn, target net.Conn) {
-		// Todo Some regular u want implement
-	})
+	proxyServe := ciproxy.Default()
+	proxyServe.Ip = *ip
+	proxyServe.Port = *port
+	proxyServe.Method = *method
+	proxyServe.AddMiddleware(logger)
 	proxyServe.Start()
 }

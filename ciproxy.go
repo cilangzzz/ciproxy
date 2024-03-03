@@ -27,12 +27,12 @@ func NewProxyServe() *ProxyServe {
 // Default 返回默认服务实例
 func Default() *ProxyServe {
 	return &ProxyServe{
-		Ip:          DefaultIp,
-		Port:        DefaultPort,
-		Method:      DefaultProxy,
-		Protocol:    DefaultConnectProtocol,
-		LogPath:     "",
-		Host:        "",
-		ProxyHandle: nil,
+		Ip:                 DefaultIp,
+		Port:               DefaultPort,
+		Method:             DefaultProxy,
+		Protocol:           DefaultConnectProtocol,
+		LogPath:            "",
+		Host:               "",
+		ProxyHandlersChain: nil,
 	}
 }

@@ -7,7 +7,7 @@ const (
 	HttpProxy       = "HttpProxy"
 	HttpsProxy      = "HttpsProxy"
 	HttpsSniffProxy = "HttpsSniffProxy"
-	CustomProxy     = "CustomProxy"
+	WebsocketProxy  = "WebsocketProxy"
 	TcpNormalProxy  = "TcpNormal"
 	TcpTunnelProxy  = "TcpTunnel"
 	PortProxy       = "PortProxy"
