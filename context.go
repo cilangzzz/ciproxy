@@ -28,8 +28,9 @@ type Context struct {
 	ConnStatus string
 	// ClientConn client net conn
 	ClientConn net.Conn
-
-	Request *http.Request
+	// TlsClientConn client tls net conn
+	TlsClientConn net.Conn
+	Request       *http.Request
 
 	index    int
 	handlers ProxyHandlersChain
@@ -39,7 +40,9 @@ type Context struct {
 
 	// ServerConn server net conn
 	ServerConn net.Conn
-	Response   http.Response
+	// TslServerConn server tls net conn
+	TslServerConn net.Conn
+	Response      http.Response
 }
 
 // SetClientConn set client conn
@@ -92,3 +95,7 @@ func (c *Context) reset() {
 	c.Response = http.Response{}
 
 }
+
+//func (c *Context)GetTransport()    *http.Transport{
+//	return &http.Transport{DialTLS: c.TslServerConn.RemoteAddr().String()}
+//}

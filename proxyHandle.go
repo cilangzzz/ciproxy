@@ -8,13 +8,14 @@
   @desc: //TODO
 **/
 
-// Package proxyHandle 代理响应处理头
+// Package ciproxy proxyHandle 代理响应处理头
 package ciproxy
 
 import (
 	"bufio"
 	"crypto/tls"
 	"github.com/opencvlzg/ciproxy/internal/util"
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -44,7 +45,7 @@ func HttpProxyHandle(c *Context) {
 	}
 	c.ServerConn, err = net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
-		errLog("remote host connect failed"+request.Host, err)
+		log.Println("remote host connect failed"+request.Host, err)
 		return
 	}
 	proxyTransfer(c.ClientConn, c.ServerConn)
@@ -62,14 +63,14 @@ func HttpsProxyHandle(c *Context) {
 	}
 	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
-		errLog("remote host connect failed"+request.Host, err)
+		log.Println("remote host connect failed"+request.Host, err)
 		return
 	}
 	switch request.Method {
 	case "CONNECT":
 		_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 		if err != nil {
-			errLog("write hello failed"+request.Host+request.Method, err)
+			log.Println("write hello failed"+request.Host+request.Method, err)
 			return
 		}
 	default:
@@ -95,19 +96,19 @@ func HttpsSniffProxyHandle(c *Context) {
 	}
 	tlsS, err := tls.Dial("tcp", request.Host, tlsCnf)
 	if err != nil {
-		errLog("remote host connect failed", err)
+		log.Println("remote host connect failed", err)
 		return
 	}
 	_, err = c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 	if err != nil {
-		errLog("write hello failed"+request.Host+request.Method, err)
+		log.Println("write hello failed"+request.Host+request.Method, err)
 		return
 	}
 	tlsC, err := upgradeTls(c.ClientConn, tlsCnf)
 	if err != nil {
-		errLog("upgrade tls failed", err)
-		//closeConn(tlsC)
-		//closeConn(tlsS)
+		log.Println("upgrade tls failed", err)
+		closeConn(tlsC)
+		closeConn(tlsS)
 		return
 	}
 	//_, err = c.Write(util.HttpContext("元神"))
@@ -120,7 +121,55 @@ func HttpsSniffProxyHandle(c *Context) {
 	//}
 	//fmt.Printf("%s\n", tlsS.RemoteAddr())
 	//proxyTransfer(tlsC, tlsS)
-	proxyLogTransfer(tlsC, tlsS)
+	proxyTransfer(tlsC, tlsS)
+
+}
+
+// HttpsSniffDetailProxyHandle https中间人处理
+func HttpsSniffDetailProxyHandle(c *Context) {
+	cReader := bufio.NewReader(c.ClientConn)
+	request, err := http.ReadRequest(cReader)
+	if err != nil {
+		return
+	}
+	tlsCnf, err := util.GenerateTlsConfig(request.Host)
+	if err != nil {
+		return
+	}
+	if !strings.Contains(request.Host, ":443") {
+		request.Host += ":443"
+	}
+	tlsS, err := tls.Dial("tcp", request.Host, tlsCnf)
+	if err != nil {
+		log.Println("remote host connect failed", err)
+		return
+	}
+	c.TlsClientConn = tlsS
+	_, err = c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+	if err != nil {
+		log.Println("write hello failed"+request.Host+request.Method, err)
+		return
+	}
+	tlsC, err := upgradeTls(c.ClientConn, tlsCnf)
+	if err != nil {
+		log.Println("upgrade tls failed", err)
+		return
+	}
+	c.TlsClientConn = tlsC
+	//_, err = c.Write(util.HttpContext("元神"))
+	//if err != nil {
+	//	fmt.Printf("%s", err)
+	//}
+	//_, err = tlsC.Write(util.HttpContext("元神"))
+	//if err != nil {
+	//	fmt.Printf("%s", err)
+	//}
+	//fmt.Printf("%s\n", tlsS.RemoteAddr())
+	//proxyTransfer(tlsC, tlsS)
+	//bytes := util.HttpContext("你好")
+	//go tlsC.Write(bytes)
+
+	go TeeDoRequestTransfer(c)
 
 }
 
@@ -136,25 +185,66 @@ func TunnelProxyHandle(c *Context) {
 	}
 	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
-		errLog("remote host connect failed"+request.Host, err)
+		log.Println("remote host connect failed"+request.Host, err)
 		return
 	}
 	switch request.Method {
 	case "CONNECT":
 		_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 		if err != nil {
-			errLog("write hello failed"+request.Host+request.Method, err)
+			log.Println("write hello failed"+request.Host+request.Method, err)
 			return
 		}
 	default:
 
 	}
-	proxyTransfer(c.ClientConn, s)
+	Transfer(c.ClientConn, s)
+}
+
+// isWebSocketUpgrade 判断是否为websocket链接
+func isWebSocketUpgrade(req *http.Request) bool {
+	upgradeHeader := req.Header.Get("Upgrade")
+	connectionHeader := req.Header.Get("Connection")
+
+	return strings.ToLower(upgradeHeader) == "websocket" && strings.Contains(strings.ToLower(connectionHeader), "upgrade")
 }
 
 // WebsocketProxyHandle websocket 代理
 func WebsocketProxyHandle(c *Context) {
-	panic("no implement")
+	buf := bufio.NewReader(c.ClientConn)
+	request, err := http.ReadRequest(buf)
+	if err != nil {
+		return
+	}
+	if !strings.HasSuffix(request.Host, ":443") {
+		request.Host += ":443"
+	}
+	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
+	if err != nil {
+		log.Println("remote host connect failed"+request.Host, err)
+		return
+	}
+	if isWebSocketUpgrade(request) {
+		_, err = s.Write([]byte("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n"))
+		if err != nil {
+			log.Println("upgrade failed"+request.Host, err)
+			return
+		}
+	} else {
+		return
+	}
+	Transfer(c.ClientConn, s)
+	//switch request.Method {
+	//case "CONNECT":
+	//	_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
+	//	if err != nil {
+	//		log.Println("write hello failed"+request.Host+request.Method, err)
+	//		return
+	//	}
+	//default:
+	//
+	//}
+	//proxyTransfer(c.ClientConn, s)
 }
 
 // TestProxyHandle 测试代理头
@@ -170,7 +260,7 @@ func WebsocketProxyHandle(c *Context) {
 //
 //		cert, err := util.LoadCertificate("./cert/www.cilang.buzz/inter.crt", "./cert/www.cilang.buzz/inter.key")
 //		if err != nil {
-//			errLog("load ca certificate failed", err)
+//			log.Println("load ca certificate failed", err)
 //			panic(err)
 //			return
 //		}
@@ -190,7 +280,7 @@ func WebsocketProxyHandle(c *Context) {
 func closeConn(c net.Conn) {
 	err := c.Close()
 	if err != nil {
-		errLog("close conn failed", err)
+		log.Println("close conn failed", err)
 		return
 	}
 }
@@ -204,7 +294,7 @@ func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
 	//}()
 	err := tlsC.Handshake()
 	if err != nil {
-		errLog("tls handshake failed", err)
+		log.Println("tls handshake failed", err)
 		return nil, err
 	}
 
@@ -215,7 +305,7 @@ func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
 //func httpsTunnelResponse(c net.Conn) {
 //	_, err := c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 //	if err != nil {
-//		errLog("write hello failed", err)
+//		log.Println("write hello failed", err)
 //		return
 //	}
 //}
@@ -228,20 +318,20 @@ func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
 //	}
 //	tlsC, err := upgradeTls(c, conf)
 //	if err != nil {
-//		errLog("upgrade tls failed", err)
+//		log.Println("upgrade tls failed", err)
 //		return
 //	}
 //	//buf := bufio.NewReader(tlsC)
 //	//request, err := http.ReadRequest(buf)
 //	//if err != nil {
-//	//	errLog("https encode filed", err)
+//	//	log.Println("https encode filed", err)
 //	//	return
 //	//}
 //	//println(request.Body)
 //	println("握手成功")
 //	tlsS, err := tls.Dial("tcp", "www.figma.com", conf)
 //	if err != nil {
-//		errLog("remote host connect failed", err)
+//		log.Println("remote host connect failed", err)
 //		return
 //	}
 //	proxyTransfer(tlsC, tlsS)
