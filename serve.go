@@ -34,11 +34,33 @@ type ProxyServe struct {
 func (p *ProxyServe) init() {
 	logInit(p.LogPath)
 	p.Host = p.Ip + ":" + p.Port
-	p.printInfo()
 	// sync.pool
 	p.contextPool.New = func() any {
 		return p.newContext()
 	}
+	// 添加响应
+	switch p.Method {
+	case HttpProxy:
+		p.AddHandle(HttpProxyHandle)
+	case HttpsProxy:
+		p.AddHandle(HttpsProxyHandle)
+	case HttpsSniffProxy:
+		p.AddHandle(HttpsSniffProxyHandle)
+	case HttpsSniffDetailProxy:
+		p.AddHandle(HttpsSniffDetailProxyHandle)
+	case TcpTunnelProxy:
+		p.AddHandle(TunnelProxyHandle)
+	case WebsocketProxy:
+		p.AddHandle(WebsocketProxyHandle)
+	case DefaultProxy:
+		if len(p.ProxyHandlersChain) == 0 {
+			panic("mainServe: No proxy handle implement")
+		}
+	default:
+		panic("mainServe: No proxy method had been chose")
+	}
+	// print setting
+	p.printInfo()
 }
 
 // newContext create new context
@@ -65,24 +87,6 @@ func (p *ProxyServe) Start() {
 	// init struct filed
 	p.init()
 
-	switch p.Method {
-	case HttpProxy:
-		p.AddHandle(HttpProxyHandle)
-	case HttpsProxy:
-		p.AddHandle(HttpsProxyHandle)
-	case HttpsSniffProxy:
-		p.AddHandle(HttpsSniffProxyHandle)
-	case TcpTunnelProxy:
-		p.AddHandle(TunnelProxyHandle)
-	case WebsocketProxy:
-		p.AddHandle(WebsocketProxyHandle)
-	case DefaultProxy:
-		if len(p.ProxyHandlersChain) == 0 {
-			panic("mainServe: No proxy handle implement")
-		}
-	default:
-		panic("mainServe: No proxy method had been chose")
-	}
 	p.ServerHandleListen()
 }
 
@@ -97,6 +101,7 @@ func (p *ProxyServe) printInfo() {
 	println("/\\  _`\\    __/\\  _`\\                                \n\\ \\ \\/\\_\\ /\\_\\ \\ \\L\\ \\_ __   ___   __  _  __  __    \n \\ \\ \\/_/_\\/\\ \\ \\ ,__/\\`'__\\/ __`\\/\\ \\/'\\/\\ \\/\\ \\   \n  \\ \\ \\L\\ \\\\ \\ \\ \\ \\/\\ \\ \\//\\ \\L\\ \\/>  </\\ \\ \\_\\ \\  \n   \\ \\____/ \\ \\_\\ \\_\\ \\ \\_\\\\ \\____//\\_/\\_\\\\/`____ \\ \n    \\/___/   \\/_/\\/_/  \\/_/ \\/___/ \\//\\/_/ `/___/> \\\n                                              /\\___/\n                                              \\/__/ ")
 	fmt.Printf("CiProxy Version %s, Mode %s\n", ProxyVersion, ProxyMode)
 	println("Log path setting to " + p.LogPath)
+	fmt.Printf("ProxyHandlersChain %v\n", p.ProxyHandlersChain)
 	fmt.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
 	log.Printf("Listen on %s:%s, Proxy Method %s, Ip Protocol %s\n", p.Ip, p.Port, p.Method, p.Protocol)
 

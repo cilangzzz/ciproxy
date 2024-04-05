@@ -15,21 +15,17 @@ import (
 	"net"
 )
 
-func errLog(msg string, err error) {
-	log.Println("serverHandle:" + msg + " err:" + err.Error())
-}
-
 // ServeProxy 启动监听
 func ServeProxy(p *ProxyServe) {
 	ln, err := net.Listen("tcp", p.Host)
 	if err != nil {
-		errLog("listen serve launch failed ", err)
+		log.Println("listen serve launch failed ", err)
 		return
 	}
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			errLog("connect client failed"+c.RemoteAddr().String()+"err", err)
+			log.Println("connect client failed"+c.RemoteAddr().String()+"err", err)
 			return
 		}
 		// 获取上下文

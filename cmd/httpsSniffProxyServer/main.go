@@ -22,25 +22,36 @@ import (
 var buffer = bytes.NewBuffer([]byte{})
 var writer = io.MultiWriter(buffer)
 var buf = bufio.NewReader(buffer)
+var client = &http.Client{}
 
 func logger() {
 
 	for {
 		request, err := http.ReadRequest(buf)
+
 		if err != nil {
 			//return
 		} else {
 			println("[CiProxy]logger middleware", request.Method, request.Host, buf.Size())
+			// 抢先请求
+			//res, err := http.DefaultClient.Do(request)
+			//if err != nil {
+			//	println("client err")
+			//	log.Println(err)
+			//	//return
+			//} else {
+			//	println("client do")
+			//	log.Println(res)
+			//}
 
 		}
-
 	}
 }
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "Server Ip Address")
 	port := flag.String("port", "6677", "Server Port")
-	method := flag.String("method", ciproxy.HttpsSniffProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
+	method := flag.String("method", ciproxy.HttpsSniffDetailProxy, "Server METHOD NORMAL,TUNNEL, SNIFF")
 	//protocol := flag.String("protocol", "TCP", "Connect Protocol")
 	//logPath := flag.String("log", "log/proxy.log", "log file path")
 	flag.Parse()
@@ -50,12 +61,12 @@ func main() {
 	//}
 	//defer file.Close()
 	//ciproxy.DefaultWriter = bufio.NewWriter(file)
-	ciproxy.DefaultWriter = writer
+	//ciproxy.DefaultWriter = writer
 
 	proxyServe := ciproxy.Default()
 	proxyServe.Ip = *ip
 	proxyServe.Port = *port
 	proxyServe.Method = *method
-	go logger()
+	//go logger()
 	proxyServe.Start()
 }
