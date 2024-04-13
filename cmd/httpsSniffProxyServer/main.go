@@ -14,7 +14,7 @@ import (
 	"bufio"
 	"bytes"
 	"flag"
-	"github.com/opencvlzg/ciproxy"
+	"github.com/cilangzzz/ciproxy"
 	"io"
 	"net/http"
 )

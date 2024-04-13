@@ -13,7 +13,7 @@ package main
 import (
 	"bufio"
 	"flag"
-	"github.com/opencvlzg/ciproxy"
+	"github.com/cilangzzz/ciproxy"
 	"net"
 	"net/http"
 	"strings"

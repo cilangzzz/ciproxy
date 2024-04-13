@@ -11,7 +11,7 @@ package main
 
 import (
 	"flag"
-	"github.com/opencvlzg/ciproxy"
+	"github.com/cilangzzz/ciproxy"
 	"log"
 )
 

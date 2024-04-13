@@ -14,7 +14,7 @@ package ciproxy
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/internal/util"
+	"github.com/cilangzzz/ciproxy/internal/util"
 	"log"
 	"net"
 	"net/http"

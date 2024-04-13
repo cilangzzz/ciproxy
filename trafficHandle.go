@@ -13,7 +13,7 @@ package ciproxy
 import (
 	"bufio"
 	"fmt"
-	"github.com/opencvlzg/ciproxy/internal/util"
+	"github.com/cilangzzz/ciproxy/internal/util"
 	"io"
 	"log"
 	"net/http"
