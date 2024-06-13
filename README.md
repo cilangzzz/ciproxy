@@ -7,6 +7,8 @@
 
 ###### <center>Introduce</center>
 
+<center>ciproxy 是一个基于tcp实现的go语言代理框架，暂时没有使用其他包</center>
+
 <center>use tcp implement, not http server, base on golang</center>
 
 </div>
