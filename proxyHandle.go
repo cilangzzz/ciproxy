@@ -144,7 +144,7 @@ func HttpsSniffDetailProxyHandle(c *Context) {
 		log.Println("remote host connect failed", err)
 		return
 	}
-	c.TlsClientConn = tlsS
+	c.TlsServerConn = tlsS
 	_, err = c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
 	if err != nil {
 		log.Println("write hello failed"+request.Host+request.Method, err)

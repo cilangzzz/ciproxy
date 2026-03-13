@@ -12,6 +12,10 @@ package ciproxy
 
 import (
 	"bufio"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"errors"
 	"fmt"
 	"github.com/opencvlzg/ciproxy/internal/util"
 	"io"
@@ -19,19 +23,113 @@ import (
 	"net/http"
 )
 
-// cryptTraffic 流量加密
-func cryptTraffic() {
-
+// TrafficCryptor 流量加密器
+type TrafficCryptor struct {
+	key []byte
+	gcm cipher.AEAD
 }
 
-// decryptTraffic 流量解密
-func decryptTraffic() {
+// NewTrafficCryptor 创建新的流量加密器
+func NewTrafficCryptor(key []byte) (*TrafficCryptor, error) {
+	if len(key) != 16 && len(key) != 24 && len(key) != 32 {
+		return nil, errors.New("key must be 16, 24 or 32 bytes")
+	}
 
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TrafficCryptor{key: key, gcm: gcm}, nil
+}
+
+// Encrypt 加密数据
+func (tc *TrafficCryptor) Encrypt(plaintext []byte) ([]byte, error) {
+	nonce := make([]byte, tc.gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	return tc.gcm.Seal(nonce, nonce, plaintext, nil), nil
+}
+
+// Decrypt 解密数据
+func (tc *TrafficCryptor) Decrypt(ciphertext []byte) ([]byte, error) {
+	nonceSize := tc.gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	return tc.gcm.Open(nil, nonce, ciphertext, nil)
+}
+
+// CryptTraffic 流量加密
+func CryptTraffic(data []byte, cryptor *TrafficCryptor) ([]byte, error) {
+	if cryptor == nil {
+		return data, nil
+	}
+	return cryptor.Encrypt(data)
+}
+
+// DecryptTraffic 流量解密
+func DecryptTraffic(data []byte, cryptor *TrafficCryptor) ([]byte, error) {
+	if cryptor == nil {
+		return data, nil
+	}
+	return cryptor.Decrypt(data)
 }
 
 // TunnelTransfer 加密流量转发
-func TunnelTransfer() {
+func TunnelTransfer(client, server io.ReadWriteCloser, cryptor *TrafficCryptor) {
+	// 客户端到服务器：解密后转发
+	go func() {
+		defer client.Close()
+		defer server.Close()
+		buf := make([]byte, 4096)
+		for {
+			n, err := client.Read(buf)
+			if err != nil {
+				return
+			}
+			decrypted, err := DecryptTraffic(buf[:n], cryptor)
+			if err != nil {
+				log.Println("decrypt error:", err)
+				return
+			}
+			_, err = server.Write(decrypted)
+			if err != nil {
+				return
+			}
+		}
+	}()
 
+	// 服务器到客户端：加密后转发
+	go func() {
+		defer client.Close()
+		defer server.Close()
+		buf := make([]byte, 4096)
+		for {
+			n, err := server.Read(buf)
+			if err != nil {
+				return
+			}
+			encrypted, err := CryptTraffic(buf[:n], cryptor)
+			if err != nil {
+				log.Println("encrypt error:", err)
+				return
+			}
+			_, err = client.Write(encrypted)
+			if err != nil {
+				return
+			}
+		}
+	}()
 }
 
 // Transfer traffic transfer 流量Io转发
@@ -89,7 +187,7 @@ func TeeDoRequestTransfer(c *Context) {
 	//	if err != nil {
 	//		//log.Println("close io writer failed", err)
 	//	}
-	//}(c.TslServerConn)
+	//}(c.TlsServerConn)
 
 	//teeReader := io.TeeReader(c, DefaultWriter)
 	// http.Read

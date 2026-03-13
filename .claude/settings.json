@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build ./...)",
+      "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && go build ./...\")",
+      "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && git status\")"
+    ]
+  }
+}
