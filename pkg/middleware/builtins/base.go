@@ -9,7 +9,7 @@ package builtins
 import (
 	"net/http"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // BaseMiddleware 基础中间件，提供默认实现

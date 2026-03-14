@@ -13,6 +13,7 @@ package ciproxy
 import (
 	"log"
 	"net"
+	"time"
 )
 
 // ServeProxy 启动监听（向后兼容）

@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // BlockMiddleware 请求阻断中间件

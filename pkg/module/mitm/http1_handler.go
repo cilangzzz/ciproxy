@@ -16,6 +16,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // HTTP1Handler HTTP/1.1 协议处理器
@@ -31,7 +33,7 @@ func NewHTTP1Handler(interceptor *Interceptor) *HTTP1Handler {
 }
 
 // HandleConnection 处理 HTTP/1.1 连接
-func (h *HTTP1Handler) HandleConnection(clientConn, serverConn net.Conn, ctx Context) error {
+func (h *HTTP1Handler) HandleConnection(clientConn, serverConn net.Conn, ctx *context.Context) error {
 	reader := bufio.NewReader(clientConn)
 
 	// 支持 keep-alive 循环处理
@@ -89,7 +91,7 @@ func (h *HTTP1Handler) HandleConnection(clientConn, serverConn net.Conn, ctx Con
 }
 
 // forwardRequest 转发请求到目标服务器
-func (h *HTTP1Handler) forwardRequest(serverConn net.Conn, ctx Context) (*http.Response, error) {
+func (h *HTTP1Handler) forwardRequest(serverConn net.Conn, ctx *context.Context) (*http.Response, error) {
 	req := ctx.GetRequest()
 
 	// 构建完整 URL

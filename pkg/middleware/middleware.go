@@ -9,7 +9,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // Middleware 中间件接口

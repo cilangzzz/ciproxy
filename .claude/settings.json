@@ -6,7 +6,8 @@
       "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && git status\")",
       "Bash(cmd /c \"go get golang.org/x/net/http2\")",
       "Bash(G:/GO/bin/go.exe get golang.org/x/net/http2)",
-      "Bash(G:/GO/bin/go.exe build ./...)"
+      "Bash(G:/GO/bin/go.exe build ./...)",
+      "Bash(cmd.exe /c \"go build ./...\")"
     ],
     "additionalDirectories": [
       "h:\\Documents\\ciproxy\\internal"

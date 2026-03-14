@@ -29,19 +29,19 @@ const (
 )
 
 /*
-	typedef struct {
-	  DWORD dwOption;
-	  union {
-	    DWORD    dwValue;
-	    LPSTR    pszValue;
-	    FILETIME ftValue;
-	  } Value;
-	} INTERNET_PER_CONN_OPTIONA, *LPINTERNET_PER_CONN_OPTIONA;
+typedef struct {
+  DWORD dwOption;
+  union {
+    DWORD    dwValue;
+    LPSTR    pszValue;
+    FILETIME ftValue;
+  } Value;
+} INTERNET_PER_CONN_OPTIONA, *LPINTERNET_PER_CONN_OPTIONA;
 
-	typedef struct _FILETIME {
-	  DWORD dwLowDateTime;
-	  DWORD dwHighDateTime;
-	} FILETIME, *PFILETIME, *LPFILETIME;
+typedef struct _FILETIME {
+  DWORD dwLowDateTime;
+  DWORD dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
 */
 type InternetPerConnOption struct {
 	dwOption uint32

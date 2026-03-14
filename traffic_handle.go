@@ -17,7 +17,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"github.com/opencvlzg/ciproxy/internal/util"
+	"github.com/opencvlzg/ciproxy/pkg/util"
 	"io"
 	"log"
 	"net/http"

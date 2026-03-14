@@ -17,8 +17,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
-	"github.com/opencvlzg/ciproxy/internal/util"
+	"github.com/opencvlzg/ciproxy/pkg/context"
+	"github.com/opencvlzg/ciproxy/pkg/util"
 )
 
 // TrafficCryptor 流量加密器

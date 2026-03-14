@@ -14,7 +14,30 @@ package ciproxy
 import (
 	"io"
 	"os"
+
+	// 重新导出核心类型
+	"github.com/opencvlzg/ciproxy/pkg/context"
+	"github.com/opencvlzg/ciproxy/pkg/middleware"
 )
+
+// ========== 类型别名，保持向后兼容 ==========
+
+// Context 请求上下文
+type Context = context.Context
+
+// ProxyHandle 代理处理函数
+type ProxyHandle = context.ProxyHandle
+
+// ProxyHandlersChain 处理器链
+type ProxyHandlersChain = context.ProxyHandlersChain
+
+// Middleware 中间件接口
+type Middleware = middleware.Middleware
+
+// MiddlewareFunc 中间件函数类型
+type MiddlewareFunc = middleware.MiddlewareFunc
+
+// ========== 包级导出 ==========
 
 // DefaultWriter reference gin
 var DefaultWriter io.Writer = os.Stdout

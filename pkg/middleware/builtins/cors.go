@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // CorsMiddleware CORS 跨域中间件

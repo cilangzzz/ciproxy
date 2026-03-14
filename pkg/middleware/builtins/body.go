@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // BodyModifier 请求/响应体修改中间件

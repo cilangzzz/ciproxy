@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // LoggingMiddleware 日志记录中间件

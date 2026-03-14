@@ -15,6 +15,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // HTTP2Handler HTTP/2 协议处理器
@@ -34,7 +36,7 @@ func NewHTTP2Handler(interceptor *Interceptor) *HTTP2Handler {
 }
 
 // HandleConnection 处理 HTTP/2 连接
-func (h *HTTP2Handler) HandleConnection(clientConn, serverConn net.Conn, ctx Context) error {
+func (h *HTTP2Handler) HandleConnection(clientConn, serverConn net.Conn, ctx *context.Context) error {
 	// 创建到目标服务器的 HTTP/2 客户端传输
 	clientTransport := &http2.Transport{
 		AllowHTTP: false,

@@ -8,13 +8,13 @@ package mitm
 
 import (
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/internal/transfer"
+	"github.com/opencvlzg/ciproxy/pkg/transfer"
 	"net"
 	"net/http"
 	"sync"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
-	"github.com/opencvlzg/ciproxy/internal/middleware"
+	"github.com/opencvlzg/ciproxy/pkg/context"
+	"github.com/opencvlzg/ciproxy/pkg/middleware"
 )
 
 // Interceptor MITM 拦截器

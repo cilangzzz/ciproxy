@@ -9,7 +9,7 @@ package builtins
 import (
 	"net/http"
 
-	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/pkg/context"
 )
 
 // HeaderModifier 请求头修改中间件
