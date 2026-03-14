@@ -57,8 +57,11 @@ var DefaultConfig = ProxyConfig{
 	Method:   HttpProxy,
 	LogPath:  "",
 	TLS: TLSConfig{
-		CertPath: "./cert/root.crt",
-		KeyPath:  "./cert/private.pem",
+		// 留空表示使用内嵌证书
+		// 用户可设置 CertPath/KeyPath 使用自定义证书
+		// 或设置 CertData/KeyData 直接提供证书数据
+		CertPath: "",
+		KeyPath:  "",
 	},
 	Timeout: TimeoutConfig{
 		Connect: DefaultOutTime,

@@ -220,8 +220,8 @@ proxy.Use(builtins.BlockWithStatus(403, "Forbidden"))
   "method": "HttpInterceptProxy",
   "logPath": "log/proxy.log",
   "tls": {
-    "certPath": "./cert/root.crt",
-    "keyPath": "./cert/private.pem"
+    "certPath": "",
+    "keyPath": ""
   },
   "timeout": {
     "connect": "10s",
@@ -235,6 +235,8 @@ proxy.Use(builtins.BlockWithStatus(403, "Forbidden"))
 }
 ```
 
+> **TLS 证书说明**：默认使用内嵌证书，零配置开箱即用。如需使用自定义证书，设置 `certPath` 和 `keyPath` 即可。
+
 加载配置：
 
 ```go
@@ -246,9 +248,6 @@ proxy.Run()
 ## Directory
 
 ```
-├── cert/                    # 证书目录
-│   ├── root.crt
-│   └── private.pem
 ├── cmd/                     # 示例程序
 │   ├── custom_proxy_server/ # 自定义代理服务器
 │   ├── generate_cert/       # 证书生成工具

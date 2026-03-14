@@ -37,6 +37,17 @@ func LoadCertificateTls(crtPath string, keyPath string) (*tls.Certificate, error
 	return &cert, nil
 }
 
+// LoadCertificateFromData 从字节数据加载证书
+// 用于加载内嵌证书或配置中提供的证书数据
+func LoadCertificateFromData(certData, keyData []byte) (*tls.Certificate, error) {
+	cert, err := tls.X509KeyPair(certData, keyData)
+	if err != nil {
+		log.Println("load certificate from data failed", err)
+		return nil, err
+	}
+	return &cert, nil
+}
+
 // LoadCertificateX509Data 加载证书私钥数据
 // 通过os加载证书数据
 func LoadCertificateX509Data(crtPath string, keyPath string) (*x509.Certificate, string, error) {
@@ -148,24 +159,48 @@ func saveCert(cert *x509.Certificate, fileName string) {
 	}
 }
 
-// GenerateTlsConfig 生成tls配置
+// TLSConfigOptions TLS配置选项
+type TLSConfigOptions struct {
+	CertPath string // 自定义证书路径
+	KeyPath  string // 自定义私钥路径
+	CertData []byte // 证书数据（优先级高于路径）
+	KeyData  []byte // 私钥数据（优先级高于路径）
+}
+
+// GenerateTlsConfig 生成tls配置（使用默认内嵌证书）
 func GenerateTlsConfig(host string) (*tls.Config, error) {
-	cert, err := LoadCertificateTls("./cert/root.crt", "./cert/private.pem")
+	return GenerateTlsConfigWithOptions(host, nil)
+}
+
+// GenerateTlsConfigWithOptions 生成TLS配置（支持自定义证书）
+// 优先级：CertData/KeyData > CertPath/KeyPath > 默认内嵌证书
+func GenerateTlsConfigWithOptions(host string, opts *TLSConfigOptions) (*tls.Config, error) {
+	var cert *tls.Certificate
+	var err error
+
+	// 优先级：CertData/KeyData > CertPath/KeyPath > 默认内嵌证书
+	if opts != nil && len(opts.CertData) > 0 && len(opts.KeyData) > 0 {
+		// 1. 使用提供的证书数据
+		cert, err = LoadCertificateFromData(opts.CertData, opts.KeyData)
+	} else if opts != nil && opts.CertPath != "" && opts.KeyPath != "" {
+		// 2. 使用自定义证书文件路径
+		cert, err = LoadCertificateTls(opts.CertPath, opts.KeyPath)
+	} else {
+		// 3. 使用内嵌的默认证书
+		cert, err = LoadCertificateFromData(DefaultCert, DefaultCertKey)
+	}
+
 	if err != nil {
-		//errLog("load root certificate failed", err)
-		panic(err)
 		return nil, err
 	}
 
 	caCertificate, err := GenerateCaCertificate(cert, host)
 	if err != nil {
-		//errLog("load ca certificate failed", err)
-		panic(err)
-		//return
+		return nil, err
 	}
 	rootCaX509, err := x509.ParseCertificate(cert.Certificate[0])
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	rootCaPool := x509.NewCertPool()
 	rootCaPool.AddCert(rootCaX509)
@@ -244,7 +279,12 @@ func GenerateCert(fileType string, organization string, country string, province
 
 // GenerateTlsConfigWithALPN 生成支持 ALPN 的 TLS 配置
 func GenerateTlsConfigWithALPN(host string, enableHTTP2 bool) (*tls.Config, error) {
-	conf, err := GenerateTlsConfig(host)
+	return GenerateTlsConfigWithALPNWithOptions(host, enableHTTP2, nil)
+}
+
+// GenerateTlsConfigWithALPNWithOptions 生成支持 ALPN 的 TLS 配置（支持自定义证书）
+func GenerateTlsConfigWithALPNWithOptions(host string, enableHTTP2 bool, opts *TLSConfigOptions) (*tls.Config, error) {
+	conf, err := GenerateTlsConfigWithOptions(host, opts)
 	if err != nil {
 		return nil, err
 	}

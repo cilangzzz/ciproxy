@@ -1,0 +1,21 @@
+{
+  "ip": "127.0.0.1",
+  "port": "8080",
+  "protocol": "TCP",
+  "method": "HttpInterceptProxy",
+  "logPath": "log/proxy.log",
+  "tls": {
+    "certPath": "./cert/root.crt",
+    "keyPath": "./cert/private.pem"
+  },
+  "timeout": {
+    "connect": "10s",
+    "read": "30s",
+    "write": "30s"
+  },
+  "features": {
+    "enableTrafficCapture": true,
+    "enableTrafficReplay": false,
+    "enableTunnelCrypt": false
+  }
+}
