@@ -11,6 +11,8 @@
 package ciproxy
 
 import (
+	"bytes"
+	"io"
 	"net"
 	"net/http"
 	"sync"
@@ -162,3 +164,102 @@ func (c *Context) AddTag(tag string) {
 //func (c *Context)GetTransport()    *http.Transport{
 //	return &http.Transport{DialTLS: c.TlsServerConn.RemoteAddr().String()}
 //}
+
+// GetRequestBody 获取请求体
+func (c *Context) GetRequestBody() []byte {
+	if c.Request == nil || c.Request.Body == nil {
+		return nil
+	}
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		return nil
+	}
+	c.Request.Body.Close()
+	c.Request.Body = io.NopCloser(bytes.NewReader(body))
+	return body
+}
+
+// SetRequestBody 设置请求体
+func (c *Context) SetRequestBody(body []byte) {
+	if c.Request == nil {
+		return
+	}
+	c.Request.Body = io.NopCloser(bytes.NewReader(body))
+	c.Request.ContentLength = int64(len(body))
+}
+
+// GetResponseBody 获取响应体
+func (c *Context) GetResponseBody() []byte {
+	if c.Response.Body == nil {
+		return nil
+	}
+	body, err := io.ReadAll(c.Response.Body)
+	if err != nil {
+		return nil
+	}
+	c.Response.Body.Close()
+	c.Response.Body = io.NopCloser(bytes.NewReader(body))
+	return body
+}
+
+// SetResponseBody 设置响应体
+func (c *Context) SetResponseBody(body []byte) {
+	c.Response.Body = io.NopCloser(bytes.NewReader(body))
+	c.Response.ContentLength = int64(len(body))
+}
+
+// GetRequestHeader 获取请求头
+func (c *Context) GetRequestHeader(key string) string {
+	if c.Request == nil {
+		return ""
+	}
+	return c.Request.Header.Get(key)
+}
+
+// SetRequestHeader 设置请求头
+func (c *Context) SetRequestHeader(key, value string) {
+	if c.Request == nil {
+		return
+	}
+	c.Request.Header.Set(key, value)
+}
+
+// DelRequestHeader 删除请求头
+func (c *Context) DelRequestHeader(key string) {
+	if c.Request == nil {
+		return
+	}
+	c.Request.Header.Del(key)
+}
+
+// GetResponseHeader 获取响应头
+func (c *Context) GetResponseHeader(key string) string {
+	return c.Response.Header.Get(key)
+}
+
+// SetResponseHeader 设置响应头
+func (c *Context) SetResponseHeader(key, value string) {
+	c.Response.Header.Set(key, value)
+}
+
+// DelResponseHeader 删除响应头
+func (c *Context) DelResponseHeader(key string) {
+	c.Response.Header.Del(key)
+}
+
+// BlockWithResponse 阻断请求并返回自定义响应
+func (c *Context) BlockWithResponse(resp *http.Response) {
+	c.Response = *resp
+	c.Abort()
+}
+
+// BlockWithStatus 阻断请求并返回简单响应
+func (c *Context) BlockWithStatus(code int, body string) {
+	c.Response = http.Response{
+		StatusCode:    code,
+		Header:        make(http.Header),
+		Body:          io.NopCloser(bytes.NewReader([]byte(body))),
+		ContentLength: int64(len(body)),
+	}
+	c.Abort()
+}

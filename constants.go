@@ -8,6 +8,7 @@ const (
 	HttpsProxy            = "HttpsProxy"
 	HttpsSniffProxy       = "HttpsSniffProxy"
 	HttpsSniffDetailProxy = "HttpsSniffDetailProxy"
+	HttpInterceptProxy    = "HttpInterceptProxy" // 新增：完整的 HTTPS MITM 拦截代理
 	WebsocketProxy        = "WebsocketProxy"
 	TcpNormalProxy        = "TcpNormal"
 	TcpTunnelProxy        = "TcpTunnel"

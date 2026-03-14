@@ -15,11 +15,43 @@ import (
 	"bufio"
 	"crypto/tls"
 	"github.com/opencvlzg/ciproxy/internal/util"
+	"github.com/opencvlzg/ciproxy/mitm"
 	"log"
 	"net"
 	"net/http"
 	"strings"
+	"sync"
 )
+
+// 全局拦截器实例
+var (
+	globalInterceptor     *mitm.Interceptor
+	interceptorOnce       sync.Once
+	interceptorConfig     *mitm.InterceptorConfig
+	interceptorConfigLock sync.RWMutex
+)
+
+// SetInterceptorConfig 设置拦截器配置
+func SetInterceptorConfig(config *mitm.InterceptorConfig) {
+	interceptorConfigLock.Lock()
+	defer interceptorConfigLock.Unlock()
+	interceptorConfig = config
+}
+
+// GetInterceptor 获取全局拦截器实例
+func GetInterceptor() *mitm.Interceptor {
+	interceptorOnce.Do(func() {
+		config := &mitm.InterceptorConfig{
+			EnableTrafficCapture: false,
+			EnableHTTP2:          true,
+		}
+		if interceptorConfig != nil {
+			config = interceptorConfig
+		}
+		globalInterceptor = mitm.NewInterceptor(config)
+	})
+	return globalInterceptor
+}
 
 // 转发流量 内部使用
 func proxyTransfer(c net.Conn, s net.Conn) {
@@ -336,3 +368,29 @@ func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
 //	}
 //	proxyTransfer(tlsC, tlsS)
 //}
+
+// HttpInterceptProxyHandle 完整的 HTTPS MITM 拦截处理
+// 支持请求/响应拦截、修改、流量捕获、HTTP/1.1 和 HTTP/2
+func HttpInterceptProxyHandle(c *Context) {
+	// 1. 读取 CONNECT 请求
+	cReader := bufio.NewReader(c.ClientConn)
+	request, err := http.ReadRequest(cReader)
+	if err != nil {
+		return
+	}
+
+	// 2. 获取拦截器
+	interceptor := GetInterceptor()
+
+	// 3. 使用 ALPN 选择器处理连接
+	selector := mitm.NewALPNSelector(interceptor)
+	err = selector.HandleMITMConnection(c.ClientConn, request.Host, c)
+	if err != nil {
+		log.Println("mitm handle error:", err)
+	}
+}
+
+// AddMITMMiddleware 添加 MITM 中间件
+func AddMITMMiddleware(mw mitm.Middleware) {
+	GetInterceptor().Use(mw)
+}

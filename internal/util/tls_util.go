@@ -241,3 +241,20 @@ func GenerateCert(fileType string, organization string, country string, province
 	saveCert(rootCert, filePath+"root.crt")
 	savePrivateKey(rootKey, filePath+"root.key")
 }
+
+// GenerateTlsConfigWithALPN 生成支持 ALPN 的 TLS 配置
+func GenerateTlsConfigWithALPN(host string, enableHTTP2 bool) (*tls.Config, error) {
+	conf, err := GenerateTlsConfig(host)
+	if err != nil {
+		return nil, err
+	}
+
+	// 设置 ALPN 协议
+	if enableHTTP2 {
+		conf.NextProtos = []string{"h2", "http/1.1"}
+	} else {
+		conf.NextProtos = []string{"http/1.1"}
+	}
+
+	return conf, nil
+}

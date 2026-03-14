@@ -3,7 +3,10 @@
     "allow": [
       "Bash(go build ./...)",
       "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && go build ./...\")",
-      "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && git status\")"
+      "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && git status\")",
+      "Bash(cmd /c \"go get golang.org/x/net/http2\")",
+      "Bash(G:/GO/bin/go.exe get golang.org/x/net/http2)",
+      "Bash(G:/GO/bin/go.exe build ./...)"
     ]
   }
 }
