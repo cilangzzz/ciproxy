@@ -143,7 +143,7 @@ func (i *Interceptor) GetTrafficStore() *transfer.TrafficStore {
 }
 
 // HandleConnect 处理 CONNECT 请求，建立 TLS 连接
-func (i *Interceptor) HandleConnect(clientConn net.Conn, host string) (clientTLS, serverTLS net.Conn, proto string, err error) {
+func (i *Interceptor) HandleConnect(clientConn net.Conn, host string) (clientTLS net.Conn, serverTLS *tls.Conn, proto string, err error) {
 	// 生成 TLS 配置
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,

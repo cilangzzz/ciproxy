@@ -40,8 +40,10 @@ func ServeProxy(p *ProxyServe) {
 		return p.newContext()
 	}
 
-	// 初始化日志
-	logInit(p.config.LogPath)
+	// 初始化日志输出
+	if p.config.LogPath != "" {
+		p.logger.SetOutput(NewFileWriter(p.config.LogPath))
+	}
 
 	// 启动监听
 	addr := p.config.IP + ":" + p.config.Port
@@ -80,7 +82,7 @@ func ServeProxy(p *ProxyServe) {
 		// 响应链处理
 		ctx.Next()
 		// 重置上下文
-		ctx.reset()
+		ctx.Reset()
 		// 放回池
 		p.contextPool.Put(ctx)
 	}

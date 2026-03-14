@@ -1,163 +1,45 @@
+/**
+  @creator: cilang
+  @since: 2024
+  @desc: 流量捕获核心逻辑
+**/
+
 package transfer
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"net/http"
-	"sync"
 	"time"
 )
 
-// CapturedRequest 捕获的HTTP请求
-type CapturedRequest struct {
-	ID        string            `json:"id"`
-	Timestamp time.Time         `json:"timestamp"`
-	Method    string            `json:"method"`
-	URL       string            `json:"url"`
-	Host      string            `json:"host"`
-	Headers   map[string]string `json:"headers"`
-	Body      []byte            `json:"body"`
-	Protocol  string            `json:"protocol"`
+// Captor 流量捕获器接口
+type Captor interface {
+	CaptureFromRequest(req *http.Request) (*CapturedRequest, error)
+	CaptureFromResponse(resp *http.Response, id string) (*CapturedResponse, error)
 }
 
-// CapturedResponse 捕获的HTTP响应
-type CapturedResponse struct {
-	ID        string            `json:"id"`
-	Timestamp time.Time         `json:"timestamp"`
-	Status    int               `json:"status"`
-	Headers   map[string]string `json:"headers"`
-	Body      []byte            `json:"body"`
+// DefaultCaptor 默认捕获器
+type DefaultCaptor struct {
+	idGenerator IDGenerator
 }
 
-// TrafficEntry 完整的请求/响应对
-type TrafficEntry struct {
-	ID       string           `json:"id"`
-	Request  CapturedRequest  `json:"request"`
-	Response CapturedResponse `json:"response"`
-	Duration time.Duration    `json:"duration"`
-	Tags     []string         `json:"tags,omitempty"`
-}
-
-// TrafficStore 流量存储
-type TrafficStore struct {
-	mu      sync.RWMutex
-	entries map[string]*TrafficEntry
-	order   []string
-}
-
-var globalStore *TrafficStore
-var storeOnce sync.Once
-
-// GetTrafficStore 获取全局流量存储
-func GetTrafficStore() *TrafficStore {
-	storeOnce.Do(func() {
-		globalStore = &TrafficStore{
-			entries: make(map[string]*TrafficEntry),
-			order:   make([]string, 0),
-		}
-	})
-	return globalStore
-}
-
-// Capture 捕获请求
-func (s *TrafficStore) Capture(req *CapturedRequest) string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	entry := &TrafficEntry{
-		ID:      generateID(),
-		Request: *req,
-	}
-	s.entries[entry.ID] = entry
-	s.order = append(s.order, entry.ID)
-	return entry.ID
-}
-
-// SetResponse 设置响应
-func (s *TrafficStore) SetResponse(id string, resp *CapturedResponse) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if entry, ok := s.entries[id]; ok {
-		entry.Response = *resp
-		entry.Duration = resp.Timestamp.Sub(entry.Request.Timestamp)
+// NewCaptor 创建捕获器
+func NewCaptor() *DefaultCaptor {
+	return &DefaultCaptor{
+		idGenerator: defaultIDGenerator,
 	}
 }
 
-// Get 获取流量条目
-func (s *TrafficStore) Get(id string) (*TrafficEntry, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	entry, ok := s.entries[id]
-	return entry, ok
-}
-
-// List 列出所有流量条目
-func (s *TrafficStore) List() []*TrafficEntry {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	entries := make([]*TrafficEntry, 0, len(s.order))
-	for _, id := range s.order {
-		if entry, ok := s.entries[id]; ok {
-			entries = append(entries, entry)
-		}
-	}
-	return entries
-}
-
-// Delete 删除流量条目
-func (s *TrafficStore) Delete(id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.entries, id)
-	for i, entryID := range s.order {
-		if entryID == id {
-			s.order = append(s.order[:i], s.order[i+1:]...)
-			break
-		}
+// NewCaptorWithGenerator 创建带自定义ID生成器的捕获器
+func NewCaptorWithGenerator(g IDGenerator) *DefaultCaptor {
+	return &DefaultCaptor{
+		idGenerator: g,
 	}
 }
 
-// Clear 清空所有流量
-func (s *TrafficStore) Clear() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.entries = make(map[string]*TrafficEntry)
-	s.order = make([]string, 0)
-}
-
-// Export 导出流量
-func (s *TrafficStore) Export() ([]byte, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	return json.MarshalIndent(s.List(), "", "  ")
-}
-
-// Import 导入流量
-func (s *TrafficStore) Import(data []byte) error {
-	var entries []*TrafficEntry
-	if err := json.Unmarshal(data, &entries); err != nil {
-		return err
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, entry := range entries {
-		s.entries[entry.ID] = entry
-		s.order = append(s.order, entry.ID)
-	}
-	return nil
-}
-
-// CaptureFromRequest 从http.Request捕获
-func CaptureFromRequest(req *http.Request) *CapturedRequest {
+// CaptureFromRequest 从 http.Request 捕获
+func (c *DefaultCaptor) CaptureFromRequest(req *http.Request) (*CapturedRequest, error) {
 	headers := make(map[string]string)
 	for k, v := range req.Header {
 		if len(v) > 0 {
@@ -167,12 +49,17 @@ func CaptureFromRequest(req *http.Request) *CapturedRequest {
 
 	var body []byte
 	if req.Body != nil {
-		body, _ = io.ReadAll(req.Body)
+		var err error
+		body, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		// 重新包装 Body 使其可重复读取
 		req.Body = io.NopCloser(bytes.NewReader(body))
 	}
 
 	return &CapturedRequest{
-		ID:        generateID(),
+		ID:        c.idGenerator.Generate(),
 		Timestamp: time.Now(),
 		Method:    req.Method,
 		URL:       req.URL.String(),
@@ -180,9 +67,79 @@ func CaptureFromRequest(req *http.Request) *CapturedRequest {
 		Headers:   headers,
 		Body:      body,
 		Protocol:  req.Proto,
+	}, nil
+}
+
+// CaptureFromResponse 从 http.Response 捕获
+func (c *DefaultCaptor) CaptureFromResponse(resp *http.Response, id string) (*CapturedResponse, error) {
+	headers := make(map[string]string)
+	for k, v := range resp.Header {
+		if len(v) > 0 {
+			headers[k] = v[0]
+		}
+	}
+
+	var body []byte
+	if resp.Body != nil {
+		var err error
+		body, err = io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		// 重新包装 Body 使其可重复读取
+		resp.Body = io.NopCloser(bytes.NewReader(body))
+	}
+
+	return &CapturedResponse{
+		ID:        id,
+		Timestamp: time.Now(),
+		Status:    resp.StatusCode,
+		Headers:   headers,
+		Body:      body,
+	}, nil
+}
+
+// 全局捕获器
+var defaultCaptor = NewCaptor()
+
+// CaptureFromRequest 全局捕获方法（向后兼容）
+// 返回捕获的请求，忽略错误（向后兼容旧行为）
+func CaptureFromRequest(req *http.Request) *CapturedRequest {
+	captured, _ := defaultCaptor.CaptureFromRequest(req)
+	return captured
+}
+
+// CaptureFromResponse 全局捕获响应方法
+func CaptureFromResponse(resp *http.Response, id string) *CapturedResponse {
+	captured, _ := defaultCaptor.CaptureFromResponse(resp, id)
+	return captured
+}
+
+// SetDefaultCaptor 设置默认捕获器
+func SetDefaultCaptor(c Captor) {
+	if c != nil {
+		if dc, ok := c.(*DefaultCaptor); ok {
+			defaultCaptor = dc
+		}
 	}
 }
 
-func generateID() string {
-	return time.Now().Format("20060102150405.999999999")
+// CaptureRequestToStore 捕获请求并存储到指定存储器
+func CaptureRequestToStore(store Storer, req *http.Request) (string, *CapturedRequest, error) {
+	captured, err := defaultCaptor.CaptureFromRequest(req)
+	if err != nil {
+		return "", nil, err
+	}
+	id := store.Capture(captured)
+	return id, captured, nil
+}
+
+// CaptureResponseToStore 捕获响应并存储到指定存储器
+func CaptureResponseToStore(store Storer, id string, resp *http.Response) error {
+	captured, err := defaultCaptor.CaptureFromResponse(resp, id)
+	if err != nil {
+		return err
+	}
+	store.SetResponse(id, captured)
+	return nil
 }

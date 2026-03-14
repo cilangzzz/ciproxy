@@ -150,11 +150,6 @@ func WithHost(ip, port string) ServerOption {
 	}
 }
 
-// Default 返回默认配置的服务器实例（向后兼容）
-func Default() *ProxyServe {
-	return New()
-}
-
 // ========== 链式调用 API ==========
 
 // Use 添加中间件（链式调用）
@@ -266,6 +261,33 @@ func (s *ProxyServe) ServerHandleListen() {
 
 // migrateLegacyFields 迁移旧字段到新配置
 func (s *ProxyServe) migrateLegacyFields() {
+	// 确保 config 已初始化
+	if s.config == nil {
+		s.config = &DefaultConfig
+	}
+
+	// 确保 logger 已初始化
+	if s.logger == nil {
+		s.logger = GetLogger()
+	}
+
+	// 确保上下文池已初始化
+	if s.contextPool.New == nil {
+		s.contextPool.New = func() interface{} {
+			return &Context{
+				Handlers: s.handlersChain,
+			}
+		}
+	}
+
+	// 确保信号通道已初始化
+	if s.signalChan == nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		s.shutdownCtx = ctx
+		s.shutdownCancel = cancel
+		s.signalChan = make(chan os.Signal, 1)
+	}
+
 	if s.Ip != "" {
 		s.config.IP = s.Ip
 	}
@@ -374,7 +396,7 @@ func (s *ProxyServe) handleConnection(conn net.Conn) {
 	// 获取上下文
 	ctx := s.contextPool.Get().(*Context)
 	defer func() {
-		ctx.reset()
+		ctx.Reset()
 		s.contextPool.Put(ctx)
 	}()
 
@@ -460,7 +482,7 @@ func (s *ProxyServe) IsRunning() bool {
 // newContext 创建新上下文
 func (s *ProxyServe) newContext() *Context {
 	return &Context{
-		handlers: s.handlersChain,
+		Handlers: s.handlersChain,
 	}
 }
 

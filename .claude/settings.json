@@ -7,7 +7,11 @@
       "Bash(cmd /c \"go get golang.org/x/net/http2\")",
       "Bash(G:/GO/bin/go.exe get golang.org/x/net/http2)",
       "Bash(G:/GO/bin/go.exe build ./...)",
-      "Bash(cmd.exe /c \"go build ./...\")"
+      "Bash(cmd.exe /c \"go build ./...\")",
+      "Bash(where go)",
+      "Bash(/g/GO/bin/go.exe build ./...)",
+      "Read(//c/Program Files/Go/**)",
+      "Bash(\"/c/Users/sysadmin/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.0.windows-amd64/bin/go.exe\" build ./...)"
     ],
     "additionalDirectories": [
       "h:\\Documents\\ciproxy\\internal"

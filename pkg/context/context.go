@@ -36,7 +36,7 @@ type Context struct {
 	Request       *http.Request
 
 	index    int
-	handlers ProxyHandlersChain
+	Handlers ProxyHandlersChain
 
 	// protect middleware context
 	mu sync.RWMutex
@@ -98,14 +98,14 @@ func (c *Context) Abort() {
 // Next set to next handle
 func (c *Context) Next() {
 	//c.index++
-	s := len(c.handlers)
+	s := len(c.Handlers)
 	for ; c.index < s; c.index++ {
-		c.handlers[c.index](c)
+		c.Handlers[c.index](c)
 	}
 }
 
-// reset reset the context
-func (c *Context) reset() {
+// Reset reset the context
+func (c *Context) Reset() {
 	c.index = 0
 	c.ConnStatus = "closed"
 	c.ClientConn = nil
