@@ -1,4 +1,4 @@
-package traffic
+package transfer
 
 import (
 	"bytes"

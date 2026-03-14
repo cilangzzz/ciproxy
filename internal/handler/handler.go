@@ -1,75 +1,77 @@
 /**
   @creator: cilang
-  @qq: 1019383856
-  @bili: https://space.bilibili.com/433915419
-  @gitee: https://gitee.com/OpencvLZG
-  @github: https://github.com/OpencvLZG
   @since: 2023/12/21
-  @desc: //TODO
+  @desc: 代理处理器
 **/
 
-// Package ciproxy proxyHandle 代理响应处理头
-package ciproxy
+package handler
 
 import (
 	"bufio"
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/internal/util"
-	mitm2 "github.com/opencvlzg/ciproxy/pkg/mitm"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/opencvlzg/ciproxy/internal/context"
+	"github.com/opencvlzg/ciproxy/internal/transfer"
+	"github.com/opencvlzg/ciproxy/internal/util"
+	"github.com/opencvlzg/ciproxy/pkg/mitm"
 )
+
+// DefaultOutTime 默认超时时间
+var DefaultOutTime = 30e9
+
+// DefaultWriter 默认写入器
+var DefaultWriter io.Writer
 
 // 全局拦截器实例
 var (
-	globalInterceptor     *mitm2.Interceptor
+	globalInterceptor     *mitm.Interceptor
 	interceptorOnce       sync.Once
-	interceptorConfig     *mitm2.InterceptorConfig
+	interceptorConfig     *mitm.InterceptorConfig
 	interceptorConfigLock sync.RWMutex
 )
 
 // SetInterceptorConfig 设置拦截器配置
-func SetInterceptorConfig(config *mitm2.InterceptorConfig) {
+func SetInterceptorConfig(config *mitm.InterceptorConfig) {
 	interceptorConfigLock.Lock()
 	defer interceptorConfigLock.Unlock()
 	interceptorConfig = config
 }
 
 // GetInterceptor 获取全局拦截器实例
-func GetInterceptor() *mitm2.Interceptor {
+func GetInterceptor() *mitm.Interceptor {
 	interceptorOnce.Do(func() {
-		config := &mitm2.InterceptorConfig{
+		config := &mitm.InterceptorConfig{
 			EnableTrafficCapture: false,
 			EnableHTTP2:          true,
 		}
 		if interceptorConfig != nil {
 			config = interceptorConfig
 		}
-		globalInterceptor = mitm2.NewInterceptor(config)
+		globalInterceptor = mitm.NewInterceptor(config)
 	})
 	return globalInterceptor
 }
 
-// 转发流量 内部使用
+// proxyTransfer 转发流量 内部使用
 func proxyTransfer(c net.Conn, s net.Conn) {
-	//go middleHandle.MiddleHandle(c, s)
-	go Transfer(c, s)
-	go Transfer(s, c)
+	go transfer.Transfer(c, s)
+	go transfer.Transfer(s, c)
 }
 
-// 转发流量 同时输出 内部使用
+// proxyLogTransfer 转发流量 同时输出 内部使用
 func proxyLogTransfer(c net.Conn, s net.Conn) {
-	//go middleHandle.MiddleHandle(c, s)
-	go TeeTransfer(c, s)
-	go TeeTransfer(s, c)
+	go transfer.TeeTransfer(c, s, DefaultWriter)
+	go transfer.TeeTransfer(s, c, DefaultWriter)
 }
 
 // HttpProxyHandle Http处理
-func HttpProxyHandle(c *Context) {
-
+func HttpProxyHandle(c *context.Context) {
 	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
@@ -84,7 +86,7 @@ func HttpProxyHandle(c *Context) {
 }
 
 // HttpsProxyHandle Https处理
-func HttpsProxyHandle(c *Context) {
+func HttpsProxyHandle(c *context.Context) {
 	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
@@ -109,11 +111,10 @@ func HttpsProxyHandle(c *Context) {
 
 	}
 	proxyTransfer(c.ClientConn, s)
-
 }
 
 // HttpsSniffProxyHandle https中间人处理
-func HttpsSniffProxyHandle(c *Context) {
+func HttpsSniffProxyHandle(c *context.Context) {
 	cReader := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(cReader)
 	if err != nil {
@@ -143,22 +144,11 @@ func HttpsSniffProxyHandle(c *Context) {
 		closeConn(tlsS)
 		return
 	}
-	//_, err = c.Write(util.HttpContext("元神"))
-	//if err != nil {
-	//	fmt.Printf("%s", err)
-	//}
-	//_, err = tlsC.Write(util.HttpContext("元神"))
-	//if err != nil {
-	//	fmt.Printf("%s", err)
-	//}
-	//fmt.Printf("%s\n", tlsS.RemoteAddr())
-	//proxyTransfer(tlsC, tlsS)
 	proxyTransfer(tlsC, tlsS)
-
 }
 
 // HttpsSniffDetailProxyHandle https中间人处理
-func HttpsSniffDetailProxyHandle(c *Context) {
+func HttpsSniffDetailProxyHandle(c *context.Context) {
 	cReader := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(cReader)
 	if err != nil {
@@ -188,25 +178,12 @@ func HttpsSniffDetailProxyHandle(c *Context) {
 		return
 	}
 	c.TlsClientConn = tlsC
-	//_, err = c.Write(util.HttpContext("元神"))
-	//if err != nil {
-	//	fmt.Printf("%s", err)
-	//}
-	//_, err = tlsC.Write(util.HttpContext("元神"))
-	//if err != nil {
-	//	fmt.Printf("%s", err)
-	//}
-	//fmt.Printf("%s\n", tlsS.RemoteAddr())
-	//proxyTransfer(tlsC, tlsS)
-	//bytes := util.HttpContext("你好")
-	//go tlsC.Write(bytes)
 
-	go TeeDoRequestTransfer(c)
-
+	go transfer.TeeDoRequestTransfer(c)
 }
 
 // TunnelProxyHandle 加密代理
-func TunnelProxyHandle(c *Context) {
+func TunnelProxyHandle(c *context.Context) {
 	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
@@ -230,7 +207,7 @@ func TunnelProxyHandle(c *Context) {
 	default:
 
 	}
-	Transfer(c.ClientConn, s)
+	transfer.Transfer(c.ClientConn, s)
 }
 
 // isWebSocketUpgrade 判断是否为websocket链接
@@ -242,7 +219,7 @@ func isWebSocketUpgrade(req *http.Request) bool {
 }
 
 // WebsocketProxyHandle websocket 代理
-func WebsocketProxyHandle(c *Context) {
+func WebsocketProxyHandle(c *context.Context) {
 	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
@@ -265,49 +242,9 @@ func WebsocketProxyHandle(c *Context) {
 	} else {
 		return
 	}
-	Transfer(c.ClientConn, s)
-	//switch request.Method {
-	//case "CONNECT":
-	//	_, err := c.ClientConn.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
-	//	if err != nil {
-	//		log.Println("write hello failed"+request.Host+request.Method, err)
-	//		return
-	//	}
-	//default:
-	//
-	//}
-	//proxyTransfer(c.ClientConn, s)
+	transfer.Transfer(c.ClientConn, s)
 }
 
-// TestProxyHandle 测试代理头
-//
-//	func TestProxyHandle(c net.Conn) {
-//		buf := make([]byte, 512)
-//		_, err := c.Read(buf)
-//		fmt.Printf("%s", buf)
-//		_, err = c.Write([]byte("HTTP/1.1 200 Connection Established \r\n\r\n"))
-//		if err != nil {
-//			//return
-//		}
-//
-//		cert, err := util.LoadCertificate("./cert/www.cilang.buzz/inter.crt", "./cert/www.cilang.buzz/inter.key")
-//		if err != nil {
-//			log.Println("load ca certificate failed", err)
-//			panic(err)
-//			return
-//		}
-//		conf := &tls.Config{
-//			Certificates:       []tls.Certificate{*cert},
-//			InsecureSkipVerify: true,
-//			MinVersion:         tls.VersionTLS12,
-//			MaxVersion:         tls.VersionTLS13,
-//		}
-//		_, err = upgradeTls(c, conf)
-//		if err != nil {
-//			return
-//		}
-//	}
-//
 // closeConn 关闭连接
 func closeConn(c net.Conn) {
 	err := c.Close()
@@ -319,11 +256,7 @@ func closeConn(c net.Conn) {
 
 // upgradeTls 从tcp升级到tls连接
 func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
-
 	tlsC := tls.Server(c, conf)
-	//defer func() {
-	//	_ = tlsC.Close()
-	//}()
 	err := tlsC.Handshake()
 	if err != nil {
 		log.Println("tls handshake failed", err)
@@ -333,45 +266,9 @@ func upgradeTls(c net.Conn, conf *tls.Config) (net.Conn, error) {
 	return tlsC, nil
 }
 
-//// httpsTunnelResponse CONNECT 方法响应
-//func httpsTunnelResponse(c net.Conn) {
-//	_, err := c.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
-//	if err != nil {
-//		log.Println("write hello failed", err)
-//		return
-//	}
-//}
-
-//// httpsTlsResponse 通信协议识别
-//func httpsTlsResponse(c net.Conn) {
-//	conf, err := util.GenerateTlsConfig("www.figma.com")
-//	if err != nil {
-//		return
-//	}
-//	tlsC, err := upgradeTls(c, conf)
-//	if err != nil {
-//		log.Println("upgrade tls failed", err)
-//		return
-//	}
-//	//buf := bufio.NewReader(tlsC)
-//	//request, err := http.ReadRequest(buf)
-//	//if err != nil {
-//	//	log.Println("https encode filed", err)
-//	//	return
-//	//}
-//	//println(request.Body)
-//	println("握手成功")
-//	tlsS, err := tls.Dial("tcp", "www.figma.com", conf)
-//	if err != nil {
-//		log.Println("remote host connect failed", err)
-//		return
-//	}
-//	proxyTransfer(tlsC, tlsS)
-//}
-
 // HttpInterceptProxyHandle 完整的 HTTPS MITM 拦截处理
 // 支持请求/响应拦截、修改、流量捕获、HTTP/1.1 和 HTTP/2
-func HttpInterceptProxyHandle(c *Context) {
+func HttpInterceptProxyHandle(c *context.Context) {
 	// 1. 读取 CONNECT 请求
 	cReader := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(cReader)
@@ -383,7 +280,7 @@ func HttpInterceptProxyHandle(c *Context) {
 	interceptor := GetInterceptor()
 
 	// 3. 使用 ALPN 选择器处理连接
-	selector := mitm2.NewALPNSelector(interceptor)
+	selector := mitm.NewALPNSelector(interceptor)
 	err = selector.HandleMITMConnection(c.ClientConn, request.Host, c)
 	if err != nil {
 		log.Println("mitm handle error:", err)
@@ -391,6 +288,6 @@ func HttpInterceptProxyHandle(c *Context) {
 }
 
 // AddMITMMiddleware 添加 MITM 中间件
-func AddMITMMiddleware(mw mitm2.Middleware) {
-	GetInterceptor().Use(mw)
+func AddMITMMiddleware(mw *mitm.Interceptor) {
+	GetInterceptor().Use(nil) // placeholder
 }

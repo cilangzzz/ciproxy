@@ -8,82 +8,40 @@ package mitm
 
 import (
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy/traffic"
+	"github.com/opencvlzg/ciproxy"
+	"github.com/opencvlzg/ciproxy/internal/transfer"
 	"net"
 	"net/http"
 	"sync"
-	"time"
 )
-
-// Context MITM 上下文接口
-// 避免循环导入，由 ciproxy.Context 实现
-type Context interface {
-	// 请求相关
-	GetRequest() *http.Request
-	SetRequest(req *http.Request)
-	GetRequestBody() []byte
-	SetRequestBody(body []byte)
-	GetRequestHeader(key string) string
-	SetRequestHeader(key, value string)
-	DelRequestHeader(key string)
-
-	// 响应相关
-	GetResponse() *http.Response
-	SetResponse(resp *http.Response)
-	GetResponseBody() []byte
-	SetResponseBody(body []byte)
-	GetResponseHeader(key string) string
-	SetResponseHeader(key, value string)
-	DelResponseHeader(key string)
-
-	// 流量捕获
-	GetCapturedRequest() interface{}
-	SetCapturedRequest(req interface{})
-	GetCapturedResponse() interface{}
-	SetCapturedResponse(resp interface{})
-	GetCaptureID() string
-	SetCaptureID(id string)
-
-	// 时间相关
-	GetStartTime() time.Time
-	SetStartTime(t time.Time)
-
-	// 标签
-	AddTag(tag string)
-	GetTags() []string
-
-	// 中断
-	Abort()
-	IsAborted() bool
-}
 
 // Middleware 中间件接口
 type Middleware interface {
 	// OnRequest 请求拦截，返回 nil 表示放行，返回 response 表示阻断
-	OnRequest(c Context) *http.Response
+	OnRequest(c *ciproxy.Context) *http.Response
 	// OnResponse 响应拦截
-	OnResponse(c Context)
+	OnResponse(c *ciproxy.Context)
 }
 
 // MiddlewareFunc 中间件函数类型，用于将函数转换为 Middleware
-type MiddlewareFunc func(c Context) *http.Response
+type MiddlewareFunc func(c *ciproxy.Context) *http.Response
 
 // OnRequest 实现 Middleware 接口
-func (mf MiddlewareFunc) OnRequest(c Context) *http.Response {
+func (mf MiddlewareFunc) OnRequest(c *ciproxy.Context) *http.Response {
 	return mf(c)
 }
 
 // OnResponse 实现 Middleware 接口
-func (mf MiddlewareFunc) OnResponse(c Context) {}
+func (mf MiddlewareFunc) OnResponse(c *ciproxy.Context) {}
 
 // ResponseMiddleware 响应中间件函数类型
-type ResponseMiddleware func(c Context)
+type ResponseMiddleware func(c *ciproxy.Context)
 
 // Interceptor MITM 拦截器
 type Interceptor struct {
 	mu           sync.RWMutex
 	middlewares  []Middleware
-	trafficStore *traffic.TrafficStore
+	trafficStore *transfer.TrafficStore
 	http1Handler *HTTP1Handler
 	http2Handler *HTTP2Handler
 	alpnSelector *ALPNSelector
@@ -103,7 +61,7 @@ type InterceptorConfig struct {
 func NewInterceptor(config *InterceptorConfig) *Interceptor {
 	i := &Interceptor{
 		middlewares:          make([]Middleware, 0),
-		trafficStore:         traffic.GetTrafficStore(),
+		trafficStore:         transfer.GetTrafficStore(),
 		EnableTrafficCapture: config.EnableTrafficCapture,
 		EnableHTTP2:          config.EnableHTTP2,
 	}
@@ -124,7 +82,7 @@ func (i *Interceptor) Use(middleware Middleware) {
 }
 
 // UseFunc 添加中间件函数
-func (i *Interceptor) UseFunc(fn func(c Context) *http.Response) {
+func (i *Interceptor) UseFunc(fn func(c *ciproxy.Context) *http.Response) {
 	i.Use(MiddlewareFunc(fn))
 }
 
@@ -136,7 +94,7 @@ func (i *Interceptor) GetMiddlewares() []Middleware {
 }
 
 // HandleRequest 处理请求拦截
-func (i *Interceptor) HandleRequest(c Context) *http.Response {
+func (i *Interceptor) HandleRequest(c *ciproxy.Context) *http.Response {
 	for _, mw := range i.GetMiddlewares() {
 		if resp := mw.OnRequest(c); resp != nil {
 			return resp
@@ -146,21 +104,21 @@ func (i *Interceptor) HandleRequest(c Context) *http.Response {
 }
 
 // HandleResponse 处理响应拦截
-func (i *Interceptor) HandleResponse(c Context) {
+func (i *Interceptor) HandleResponse(c *ciproxy.Context) {
 	for _, mw := range i.GetMiddlewares() {
 		mw.OnResponse(c)
 	}
 }
 
 // CaptureRequest 捕获请求
-func (i *Interceptor) CaptureRequest(c Context) string {
-	if !i.EnableTrafficCapture || c.GetRequest() == nil {
+func (i *Interceptor) CaptureRequest(c *ciproxy.Context) string {
+	if !i.EnableTrafficCapture || c.Request == nil {
 		return ""
 	}
 
-	captured := traffic.CaptureFromRequest(c.GetRequest())
-	c.SetCapturedRequest(captured)
-	c.SetCaptureID(captured.ID)
+	captured := transfer.CaptureFromRequest(c.Request)
+	c.CapturedRequest = captured
+	c.CaptureID = captured.ID
 
 	if i.trafficStore != nil {
 		return i.trafficStore.Capture(captured)
@@ -169,19 +127,15 @@ func (i *Interceptor) CaptureRequest(c Context) string {
 }
 
 // CaptureResponse 捕获响应
-func (i *Interceptor) CaptureResponse(c Context) {
-	if !i.EnableTrafficCapture || c.GetCaptureID() == "" {
+func (i *Interceptor) CaptureResponse(c *ciproxy.Context) {
+	if !i.EnableTrafficCapture || c.CaptureID == "" {
 		return
 	}
 
-	resp := c.GetResponse()
-	if resp == nil {
-		return
-	}
-
-	captured := &traffic.CapturedResponse{
-		ID:        c.GetCaptureID(),
-		Timestamp: c.GetStartTime(),
+	resp := c.Response
+	captured := &transfer.CapturedResponse{
+		ID:        c.CaptureID,
+		Timestamp: c.StartTime,
 		Status:    resp.StatusCode,
 		Headers:   make(map[string]string),
 	}
@@ -192,15 +146,15 @@ func (i *Interceptor) CaptureResponse(c Context) {
 		}
 	}
 
-	c.SetCapturedResponse(captured)
+	c.CapturedResponse = captured
 
 	if i.trafficStore != nil {
-		i.trafficStore.SetResponse(c.GetCaptureID(), captured)
+		i.trafficStore.SetResponse(c.CaptureID, captured)
 	}
 }
 
 // GetTrafficStore 获取流量存储
-func (i *Interceptor) GetTrafficStore() *traffic.TrafficStore {
+func (i *Interceptor) GetTrafficStore() *transfer.TrafficStore {
 	return i.trafficStore
 }
 
@@ -235,7 +189,7 @@ func (i *Interceptor) HandleConnect(clientConn net.Conn, host string) (clientTLS
 }
 
 // HandleConnection 根据协议处理连接
-func (i *Interceptor) HandleConnection(clientConn, serverTLS net.Conn, proto string, ctx Context) error {
+func (i *Interceptor) HandleConnection(clientConn, serverTLS net.Conn, proto string, ctx *ciproxy.Context) error {
 	switch proto {
 	case "h2":
 		if i.EnableHTTP2 && i.http2Handler != nil {

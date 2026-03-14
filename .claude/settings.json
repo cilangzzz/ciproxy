@@ -7,6 +7,9 @@
       "Bash(cmd /c \"go get golang.org/x/net/http2\")",
       "Bash(G:/GO/bin/go.exe get golang.org/x/net/http2)",
       "Bash(G:/GO/bin/go.exe build ./...)"
+    ],
+    "additionalDirectories": [
+      "h:\\Documents\\ciproxy\\internal"
     ]
   }
 }

@@ -8,7 +8,6 @@ package mitm
 
 import (
 	"crypto/tls"
-	"github.com/opencvlzg/ciproxy"
 	"github.com/opencvlzg/ciproxy/internal/util"
 	"log"
 	"net"
@@ -44,7 +43,7 @@ func (s *ALPNSelector) SelectProtocol(clientHello *tls.ClientHelloInfo) (string,
 }
 
 // HandleMITMConnection 完整的 MITM 连接处理
-func (s *ALPNSelector) HandleMITMConnection(clientConn net.Conn, host string, ctx *ciproxy.Context) error {
+func (s *ALPNSelector) HandleMITMConnection(clientConn net.Conn, host string, ctx Context) error {
 	// 1. 解析主机名
 	if !strings.Contains(host, ":") {
 		host += ":443"
