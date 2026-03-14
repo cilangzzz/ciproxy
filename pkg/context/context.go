@@ -95,12 +95,12 @@ func (c *Context) Abort() {
 	c.index = -1
 }
 
-// Next set to next handle
+// Next set to next handle (Gin-style implementation)
+// 确保中间件调用 c.Next() 后不会重复执行处理器
 func (c *Context) Next() {
-	//c.index++
-	s := len(c.Handlers)
-	for ; c.index < s; c.index++ {
-		c.Handlers[c.index](c)
+	for c.index < len(c.Handlers) {
+		c.index++
+		c.Handlers[c.index-1](c)
 	}
 }
 

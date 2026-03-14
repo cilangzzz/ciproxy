@@ -56,31 +56,66 @@ func GetInterceptor() *mitm.Interceptor {
 }
 
 // 转发流量 内部使用（使用 pkg/transfer 模块）
+// 使用 sync.WaitGroup 等待双向转发完成
 func proxyTransfer(c net.Conn, s net.Conn) {
-	go func() { _ = transfer.Transfer(c, s) }()
-	go func() { _ = transfer.Transfer(s, c) }()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_ = transfer.Transfer(c, s)
+	}()
+	go func() {
+		defer wg.Done()
+		_ = transfer.Transfer(s, c)
+	}()
+	wg.Wait()
 }
 
 // 转发流量 同时输出 内部使用（使用 pkg/transfer 模块）
 func proxyLogTransfer(c net.Conn, s net.Conn) {
-	go func() { _ = transfer.TeeTransfer(c, s, DefaultWriter) }()
-	go func() { _ = transfer.TeeTransfer(s, c, DefaultWriter) }()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		_ = transfer.TeeTransfer(c, s, DefaultWriter)
+	}()
+	go func() {
+		defer wg.Done()
+		_ = transfer.TeeTransfer(s, c, DefaultWriter)
+	}()
+	wg.Wait()
 }
 
 // HttpProxyHandle Http处理
 func HttpProxyHandle(c *Context) {
-
 	buf := bufio.NewReader(c.ClientConn)
 	request, err := http.ReadRequest(buf)
 	if err != nil {
 		return
 	}
-	c.ServerConn, err = net.DialTimeout("tcp", request.Host, DefaultOutTime)
+
+	// 建立到目标服务器的连接
+	serverConn, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
 	if err != nil {
-		log.Println("remote host connect failed"+request.Host, err)
+		log.Println("remote host connect failed: "+request.Host, err)
 		return
 	}
-	proxyTransfer(c.ClientConn, c.ServerConn)
+	defer serverConn.Close()
+
+	// 转发请求
+	if err := request.Write(serverConn); err != nil {
+		return
+	}
+
+	// 读取响应
+	resp, err := http.ReadResponse(bufio.NewReader(serverConn), request)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	// 返回响应给客户端
+	resp.Write(c.ClientConn)
 }
 
 // HttpsProxyHandle Https处理

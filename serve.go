@@ -274,9 +274,7 @@ func (s *ProxyServe) migrateLegacyFields() {
 	// 确保上下文池已初始化
 	if s.contextPool.New == nil {
 		s.contextPool.New = func() interface{} {
-			return &Context{
-				Handlers: s.handlersChain,
-			}
+			return s.newContext()
 		}
 	}
 
@@ -390,7 +388,7 @@ func (s *ProxyServe) handleConnection(conn net.Conn) {
 	defer func() {
 		atomic.AddInt64(&s.stats.ActiveConnections, -1)
 		s.connWg.Done()
-		conn.Close()
+		conn.Close() // 确保连接被关闭
 	}()
 
 	// 获取上下文
