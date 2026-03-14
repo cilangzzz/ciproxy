@@ -14,7 +14,8 @@
       "Bash(\"/c/Users/sysadmin/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.0.windows-amd64/bin/go.exe\" build ./...)",
       "Bash(go build ./cmd/...)",
       "Bash(cmd.exe /c \"cd /d h:\\\\Documents\\\\ciproxy && go build ./cmd/...\")",
-      "Read(//c/Go/**)"
+      "Read(//c/Go/**)",
+      "Bash(\"/c/Users/sysadmin/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.25.0.windows-amd64/bin/go.exe\" build -C \"/h/Documents/ciproxy\" ./...)"
     ],
     "additionalDirectories": [
       "h:\\Documents\\ciproxy\\internal"

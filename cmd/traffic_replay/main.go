@@ -28,6 +28,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -67,7 +68,7 @@ func main() {
 
 	// 设置详细输出回调
 	if *verbose {
-		replayer.SetBeforeReplay(func(req *transfer.CapturedRequest) error {
+		replayer.SetBeforeReplay(func(req *http.Request) error {
 			log.Printf("[REPLAY] %s %s", req.Method, req.URL)
 			return nil
 		})
