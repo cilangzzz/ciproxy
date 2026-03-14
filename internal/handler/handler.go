@@ -9,17 +9,18 @@ package handler
 import (
 	"bufio"
 	"crypto/tls"
+	mitm2 "github.com/opencvlzg/ciproxy/pkg/module/mitm"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/opencvlzg/ciproxy/internal/context"
 	"github.com/opencvlzg/ciproxy/internal/transfer"
 	"github.com/opencvlzg/ciproxy/internal/util"
-	"github.com/opencvlzg/ciproxy/pkg/mitm"
 )
 
 // DefaultOutTime 默认超时时间
@@ -30,30 +31,30 @@ var DefaultWriter io.Writer
 
 // 全局拦截器实例
 var (
-	globalInterceptor     *mitm.Interceptor
+	globalInterceptor     *mitm2.Interceptor
 	interceptorOnce       sync.Once
-	interceptorConfig     *mitm.InterceptorConfig
+	interceptorConfig     *mitm2.InterceptorConfig
 	interceptorConfigLock sync.RWMutex
 )
 
 // SetInterceptorConfig 设置拦截器配置
-func SetInterceptorConfig(config *mitm.InterceptorConfig) {
+func SetInterceptorConfig(config *mitm2.InterceptorConfig) {
 	interceptorConfigLock.Lock()
 	defer interceptorConfigLock.Unlock()
 	interceptorConfig = config
 }
 
 // GetInterceptor 获取全局拦截器实例
-func GetInterceptor() *mitm.Interceptor {
+func GetInterceptor() *mitm2.Interceptor {
 	interceptorOnce.Do(func() {
-		config := &mitm.InterceptorConfig{
+		config := &mitm2.InterceptorConfig{
 			EnableTrafficCapture: false,
 			EnableHTTP2:          true,
 		}
 		if interceptorConfig != nil {
 			config = interceptorConfig
 		}
-		globalInterceptor = mitm.NewInterceptor(config)
+		globalInterceptor = mitm2.NewInterceptor(config)
 	})
 	return globalInterceptor
 }
@@ -77,7 +78,7 @@ func HttpProxyHandle(c *context.Context) {
 	if err != nil {
 		return
 	}
-	c.ServerConn, err = net.DialTimeout("tcp", request.Host, DefaultOutTime)
+	c.ServerConn, err = net.DialTimeout("tcp", request.Host, time.Duration(DefaultOutTime))
 	if err != nil {
 		log.Println("remote host connect failed"+request.Host, err)
 		return
@@ -95,7 +96,7 @@ func HttpsProxyHandle(c *context.Context) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, time.Duration(DefaultOutTime))
 	if err != nil {
 		log.Println("remote host connect failed"+request.Host, err)
 		return
@@ -192,7 +193,7 @@ func TunnelProxyHandle(c *context.Context) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, time.Duration(DefaultOutTime))
 	if err != nil {
 		log.Println("remote host connect failed"+request.Host, err)
 		return
@@ -228,7 +229,7 @@ func WebsocketProxyHandle(c *context.Context) {
 	if !strings.HasSuffix(request.Host, ":443") {
 		request.Host += ":443"
 	}
-	s, err := net.DialTimeout("tcp", request.Host, DefaultOutTime)
+	s, err := net.DialTimeout("tcp", request.Host, time.Duration(DefaultOutTime))
 	if err != nil {
 		log.Println("remote host connect failed"+request.Host, err)
 		return
@@ -280,7 +281,7 @@ func HttpInterceptProxyHandle(c *context.Context) {
 	interceptor := GetInterceptor()
 
 	// 3. 使用 ALPN 选择器处理连接
-	selector := mitm.NewALPNSelector(interceptor)
+	selector := mitm2.NewALPNSelector(interceptor)
 	err = selector.HandleMITMConnection(c.ClientConn, request.Host, c)
 	if err != nil {
 		log.Println("mitm handle error:", err)
@@ -288,6 +289,6 @@ func HttpInterceptProxyHandle(c *context.Context) {
 }
 
 // AddMITMMiddleware 添加 MITM 中间件
-func AddMITMMiddleware(mw *mitm.Interceptor) {
+func AddMITMMiddleware(mw *mitm2.Interceptor) {
 	GetInterceptor().Use(nil) // placeholder
 }

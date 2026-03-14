@@ -7,6 +7,7 @@
 package builtins
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"strings"

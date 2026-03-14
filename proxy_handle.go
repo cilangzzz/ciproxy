@@ -15,7 +15,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"github.com/opencvlzg/ciproxy/internal/util"
-	mitm2 "github.com/opencvlzg/ciproxy/pkg/mitm"
+	"github.com/opencvlzg/ciproxy/pkg/module/mitm"
 	"log"
 	"net"
 	"net/http"
@@ -25,30 +25,30 @@ import (
 
 // 全局拦截器实例
 var (
-	globalInterceptor     *mitm2.Interceptor
+	globalInterceptor     *mitm.Interceptor
 	interceptorOnce       sync.Once
-	interceptorConfig     *mitm2.InterceptorConfig
+	interceptorConfig     *mitm.InterceptorConfig
 	interceptorConfigLock sync.RWMutex
 )
 
 // SetInterceptorConfig 设置拦截器配置
-func SetInterceptorConfig(config *mitm2.InterceptorConfig) {
+func SetInterceptorConfig(config *mitm.InterceptorConfig) {
 	interceptorConfigLock.Lock()
 	defer interceptorConfigLock.Unlock()
 	interceptorConfig = config
 }
 
 // GetInterceptor 获取全局拦截器实例
-func GetInterceptor() *mitm2.Interceptor {
+func GetInterceptor() *mitm.Interceptor {
 	interceptorOnce.Do(func() {
-		config := &mitm2.InterceptorConfig{
+		config := &mitm.InterceptorConfig{
 			EnableTrafficCapture: false,
 			EnableHTTP2:          true,
 		}
 		if interceptorConfig != nil {
 			config = interceptorConfig
 		}
-		globalInterceptor = mitm2.NewInterceptor(config)
+		globalInterceptor = mitm.NewInterceptor(config)
 	})
 	return globalInterceptor
 }
@@ -383,7 +383,7 @@ func HttpInterceptProxyHandle(c *Context) {
 	interceptor := GetInterceptor()
 
 	// 3. 使用 ALPN 选择器处理连接
-	selector := mitm2.NewALPNSelector(interceptor)
+	selector := mitm.NewALPNSelector(interceptor)
 	err = selector.HandleMITMConnection(c.ClientConn, request.Host, c)
 	if err != nil {
 		log.Println("mitm handle error:", err)
@@ -391,6 +391,6 @@ func HttpInterceptProxyHandle(c *Context) {
 }
 
 // AddMITMMiddleware 添加 MITM 中间件
-func AddMITMMiddleware(mw mitm2.Middleware) {
+func AddMITMMiddleware(mw mitm.Middleware) {
 	GetInterceptor().Use(mw)
 }
