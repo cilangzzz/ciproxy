@@ -18,6 +18,10 @@ import (
 
 // ServeProxy 启动监听（向后兼容）
 // Deprecated: 使用 ProxyServe.Start() 代替
+// 迁移示例:
+//
+//	旧: ServeProxy(proxyServe)
+//	新: proxyServe.Start()
 func ServeProxy(p *ProxyServe) {
 	// 向后兼容：如果使用旧的 API，初始化必要字段
 	if p.config == nil {
@@ -86,9 +90,4 @@ func ServeProxy(p *ProxyServe) {
 		// 放回池
 		p.contextPool.Put(ctx)
 	}
-}
-
-// handle connHandle
-func handle(proxyHandle ProxyHandle) {
-	// 预留扩展点
 }

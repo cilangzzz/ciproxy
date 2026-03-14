@@ -18,6 +18,7 @@ import (
 	// 重新导出核心类型
 	"github.com/opencvlzg/ciproxy/pkg/context"
 	"github.com/opencvlzg/ciproxy/pkg/middleware"
+	"github.com/opencvlzg/ciproxy/pkg/transfer"
 )
 
 // ========== 类型别名，保持向后兼容 ==========
@@ -36,6 +37,31 @@ type Middleware = middleware.Middleware
 
 // MiddlewareFunc 中间件函数类型
 type MiddlewareFunc = middleware.MiddlewareFunc
+
+// ========== Transfer 模块类型别名 ==========
+
+// TransferOption 转发选项函数
+type TransferOption = transfer.TransferOption
+
+// TransferOptions 转发选项
+type TransferOptions = transfer.TransferOptions
+
+// NOPCryptor 空加密器（不进行加密/解密操作）
+type NOPCryptor = transfer.NOPCryptor
+
+// ========== Transfer 选项函数导出 ==========
+
+// WithBufferSize 设置缓冲区大小
+var WithBufferSize = transfer.WithBufferSize
+
+// WithCryptor 设置加密器
+var WithCryptor = transfer.WithCryptor
+
+// WithErrorCallback 设置错误回调
+var WithErrorCallback = transfer.WithErrorCallback
+
+// WithDataCallback 设置数据回调
+var WithDataCallback = transfer.WithDataCallback
 
 // ========== 包级导出 ==========
 

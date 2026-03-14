@@ -16,6 +16,7 @@ import (
 	"crypto/tls"
 	"github.com/opencvlzg/ciproxy/pkg/middleware"
 	mitm "github.com/opencvlzg/ciproxy/pkg/module/mitm"
+	"github.com/opencvlzg/ciproxy/pkg/transfer"
 	"github.com/opencvlzg/ciproxy/pkg/util"
 	"log"
 	"net"
@@ -54,18 +55,16 @@ func GetInterceptor() *mitm.Interceptor {
 	return globalInterceptor
 }
 
-// 转发流量 内部使用
+// 转发流量 内部使用（使用 pkg/transfer 模块）
 func proxyTransfer(c net.Conn, s net.Conn) {
-	//go middleHandle.MiddleHandle(c, s)
-	go Transfer(c, s)
-	go Transfer(s, c)
+	go func() { _ = transfer.Transfer(c, s) }()
+	go func() { _ = transfer.Transfer(s, c) }()
 }
 
-// 转发流量 同时输出 内部使用
+// 转发流量 同时输出 内部使用（使用 pkg/transfer 模块）
 func proxyLogTransfer(c net.Conn, s net.Conn) {
-	//go middleHandle.MiddleHandle(c, s)
-	go TeeTransfer(c, s)
-	go TeeTransfer(s, c)
+	go func() { _ = transfer.TeeTransfer(c, s, DefaultWriter) }()
+	go func() { _ = transfer.TeeTransfer(s, c, DefaultWriter) }()
 }
 
 // HttpProxyHandle Http处理
